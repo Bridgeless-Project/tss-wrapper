@@ -6,7 +6,9 @@ import (
 	"os"
 	"os/exec"
 
+	db "github.com/Bridgeless-Project/tss-wrapper-svc/internal/data"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/types"
+	pbTypes "github.com/Bridgeless-Project/tss-wrapper-svc/resources/types"
 	"github.com/pkg/errors"
 	"gitlab.com/distributed_lab/logan/v3"
 )
@@ -18,13 +20,15 @@ type Orchestrator struct {
 
 	cmd      *exec.Cmd
 	taskChan <-chan types.Task
+	tasksDb  db.TasksQ
 }
 
-func NewOrchestrator(binaryPath string, taskChan <-chan types.Task, logger *logan.Entry) *Orchestrator {
+func NewOrchestrator(binaryPath string, taskChan <-chan types.Task, logger *logan.Entry, tasksDb db.TasksQ) *Orchestrator {
 	return &Orchestrator{
 		binaryPath: binaryPath,
 		taskChan:   taskChan,
 		logger:     logger.WithField("component", "orchestrator"),
+		tasksDb:    tasksDb,
 	}
 }
 
@@ -76,17 +80,50 @@ func (o *Orchestrator) Run(ctx context.Context) error {
 			return nil
 
 		case task := <-o.taskChan:
-			o.logger.WithField("task", fmt.Sprintf("%T", task)).Info("received task")
+			taskID := task.GetID()
+			o.logger.
+				WithField("task_id", taskID).
+				WithField("task_type", fmt.Sprintf("%T", task)).
+				Info("executing task")
 
 			if err := o.Stop(); err != nil {
+				o.updateTaskFailed(taskID, err)
 				return errors.Wrap(err, "failed to stop process")
 			}
+
 			if err := task.Execute(ctx); err != nil {
-				return errors.Wrap(err, "failed to execute task")
+				o.updateTaskFailed(taskID, err)
+				o.logger.WithError(err).
+					WithField("task_id", taskID).
+					Error("task execution failed")
+				// Continue running, start default mode again
+				if startErr := o.StartDefaultMode(ctx); startErr != nil {
+					return errors.Wrap(startErr, "failed to restart default mode after task failure")
+				}
+				continue
 			}
+
+			// Update task status to Completed
+			if err := o.tasksDb.UpdateStatus(taskID, pbTypes.ProcessStatus_PROCESS_STATUS_COMPLETED); err != nil {
+				o.logger.WithError(err).
+					WithField("task_id", taskID).
+					Error("failed to update task status to completed")
+			}
+
+			o.logger.WithField("task_id", taskID).Info("task completed successfully")
+
 			if err := o.StartDefaultMode(ctx); err != nil {
 				return errors.Wrap(err, "failed to restart default mode after task")
 			}
 		}
+	}
+}
+
+// updateTaskFailed updates task status to Failed with error message
+func (o *Orchestrator) updateTaskFailed(taskID int64, err error) {
+	if updateErr := o.tasksDb.UpdateStatusWithError(taskID, pbTypes.ProcessStatus_PROCESS_STATUS_FAILED, err.Error()); updateErr != nil {
+		o.logger.WithError(updateErr).
+			WithField("task_id", taskID).
+			Error("failed to update task status to failed")
 	}
 }

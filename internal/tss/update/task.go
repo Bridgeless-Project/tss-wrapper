@@ -2,6 +2,7 @@ package update
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"time"
 
@@ -9,8 +10,18 @@ import (
 	"github.com/pkg/errors"
 )
 
+const TaskType = "update"
+
+// taskData represents the serializable part of the task for database storage
+type taskData struct {
+	Link      string `json:"link"`
+	Version   string `json:"version"`
+	StartTime int64  `json:"start_time"`
+}
+
 type Task struct {
-	Link      string // link to the tss binary to download
+	id        int64 // database ID
+	Link      string
 	Version   string
 	StartTime time.Time
 }
@@ -44,7 +55,7 @@ func (t Task) Parse(attributes []types.Attribute) (types.Task, error) {
 func (t Task) StartScheduling(ctx context.Context, taskChan chan<- types.Task) {
 	delay := time.Until(t.StartTime)
 	if delay <= 0 {
-		taskChan <- t
+		taskChan <- &t
 		return
 	}
 	timer := time.NewTimer(delay)
@@ -53,7 +64,7 @@ func (t Task) StartScheduling(ctx context.Context, taskChan chan<- types.Task) {
 	case <-ctx.Done():
 		return
 	case <-timer.C:
-		taskChan <- t
+		taskChan <- &t
 	}
 }
 
@@ -63,5 +74,41 @@ func (t Task) Name() string {
 
 func (t Task) DownloadTSSBinary(ctx context.Context) error {
 	// TODO: Implement logic to download the TSS binary from t.Link
+	return nil
+}
+
+func (t Task) GetID() int64 {
+	return t.id
+}
+
+func (t *Task) SetID(id int64) {
+	t.id = id
+}
+
+func (t Task) GetTaskType() string {
+	return TaskType
+}
+
+func (t Task) MarshalData() (string, error) {
+	data := taskData{
+		Link:      t.Link,
+		Version:   t.Version,
+		StartTime: t.StartTime.Unix(),
+	}
+	bytes, err := json.Marshal(data)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to marshal task data")
+	}
+	return string(bytes), nil
+}
+
+func (t *Task) UnmarshalData(data string) error {
+	var td taskData
+	if err := json.Unmarshal([]byte(data), &td); err != nil {
+		return errors.Wrap(err, "failed to unmarshal task data")
+	}
+	t.Link = td.Link
+	t.Version = td.Version
+	t.StartTime = time.Unix(td.StartTime, 0)
 	return nil
 }

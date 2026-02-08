@@ -4,19 +4,24 @@ import (
 	"context"
 	"sync"
 
+	db "github.com/Bridgeless-Project/tss-wrapper-svc/internal/data"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/types"
+	pbTypes "github.com/Bridgeless-Project/tss-wrapper-svc/resources/types"
+	"gitlab.com/distributed_lab/logan/v3"
 )
 
 type Scheduler struct {
 	taskChan       <-chan types.Task
-	tasks          sync.Map
 	tasksWaitGroup *sync.WaitGroup
-	// internal chan that receives task when
+	// internal chan that receives task when ready
 	readyTasks       chan types.Task
 	orchestratorChan chan<- types.Task
+
+	tasksDb db.TasksQ
+	logger  *logan.Entry
 }
 
-func New(taskChan <-chan types.Task, orchestratorChan chan<- types.Task) *Scheduler {
+func New(taskChan <-chan types.Task, orchestratorChan chan<- types.Task, tasksDb db.TasksQ, logger *logan.Entry) *Scheduler {
 	readyChan := make(chan types.Task)
 	taskWaitGroup := new(sync.WaitGroup)
 	return &Scheduler{
@@ -24,47 +29,66 @@ func New(taskChan <-chan types.Task, orchestratorChan chan<- types.Task) *Schedu
 		orchestratorChan: orchestratorChan,
 		readyTasks:       readyChan,
 		tasksWaitGroup:   taskWaitGroup,
+		tasksDb:          tasksDb,
+		logger:           logger.WithField("component", "scheduler"),
 	}
 }
 
-func (u *Scheduler) Run(ctx context.Context) error {
+func (s *Scheduler) Run(ctx context.Context) error {
 	wg := new(sync.WaitGroup)
 	wg.Add(2)
 	go func() {
 		defer wg.Done()
-		u.handleIncomingTasks(ctx)
+		s.handleIncomingTasks(ctx)
 	}()
 	go func() {
 		defer wg.Done()
-		u.handleScheduledTime(ctx)
+		s.handleScheduledTime(ctx)
 	}()
 	wg.Wait()
 	return nil
 }
 
-func (u *Scheduler) handleIncomingTasks(ctx context.Context) {
+func (s *Scheduler) handleIncomingTasks(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-
 			return
-		case task := <-u.taskChan:
-			u.tasksWaitGroup.Add(1)
-			go task.StartScheduling(ctx, u.readyTasks)
+		case task := <-s.taskChan:
+			// Update status to Planned when scheduling starts
+			if err := s.tasksDb.UpdateStatus(task.GetID(), pbTypes.ProcessStatus_PROCESS_STATUS_PLANNED); err != nil {
+				s.logger.WithError(err).
+					WithField("task_id", task.GetID()).
+					Error("failed to update task status to planned")
+			}
+
+			s.tasksWaitGroup.Add(1)
+			go task.StartScheduling(ctx, s.readyTasks)
 		}
 	}
 }
 
-func (u *Scheduler) handleScheduledTime(ctx context.Context) {
+func (s *Scheduler) handleScheduledTime(ctx context.Context) {
 	for {
 		select {
 		case <-ctx.Done():
-			//TODO: gracefully shutdown
-
 			return
-		case task := <-u.readyTasks:
-			u.orchestratorChan <- task
-			u.tasksWaitGroup.Done()
+		case task := <-s.readyTasks:
+			// Update status to Ongoing when task is ready for execution
+			if err := s.tasksDb.UpdateStatus(task.GetID(), pbTypes.ProcessStatus_PROCESS_STATUS_ONGOING); err != nil {
+				s.logger.WithError(err).
+					WithField("task_id", task.GetID()).
+					Error("failed to update task status to ongoing")
+			}
+
+			s.orchestratorChan <- task
+			s.tasksWaitGroup.Done()
 		}
 	}
+}
+
+// ScheduleTask adds a task directly to the scheduler (for loading from DB)
+func (s *Scheduler) ScheduleTask(ctx context.Context, task types.Task) {
+	s.tasksWaitGroup.Add(1)
+	go task.StartScheduling(ctx, s.readyTasks)
 }

@@ -16,7 +16,17 @@ import (
 	"github.com/pkg/errors"
 )
 
+const TaskType = "auto_resharing"
+
+// taskData represents the serializable part of the task for database storage
+type taskData struct {
+	EpochId   uint32                `json:"epoch_id"`
+	TssInfo   []bridgeTypes.TSSInfo `json:"tss_info"`
+	StartTime int64                 `json:"start_time"`
+}
+
 type Task struct {
+	id               int64 // database ID
 	EpochId          uint32
 	TssInfo          []bridgeTypes.TSSInfo
 	StartTime        time.Time
@@ -190,4 +200,41 @@ func (t Task) StartScheduling(ctx context.Context, taskChan chan<- types.Task) {
 
 func (t Task) Name() string {
 	return "AutoResharingTask"
+}
+
+func (t Task) GetID() int64 {
+	return t.id
+}
+
+func (t *Task) SetID(id int64) {
+	t.id = id
+}
+
+func (t Task) GetTaskType() string {
+	return TaskType
+}
+
+func (t Task) MarshalData() (string, error) {
+	data := taskData{
+		EpochId:   t.EpochId,
+		TssInfo:   t.TssInfo,
+		StartTime: t.StartTime.Unix(),
+	}
+	bytes, err := json.Marshal(data)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to marshal task data")
+	}
+	return string(bytes), nil
+}
+
+// UnmarshalData deserializes the task data from JSON
+func (t *Task) UnmarshalData(data string) error {
+	var td taskData
+	if err := json.Unmarshal([]byte(data), &td); err != nil {
+		return errors.Wrap(err, "failed to unmarshal task data")
+	}
+	t.EpochId = td.EpochId
+	t.TssInfo = td.TssInfo
+	t.StartTime = time.Unix(td.StartTime, 0)
+	return nil
 }

@@ -9,6 +9,7 @@ import (
 	db "github.com/Bridgeless-Project/tss-wrapper-svc/internal/data"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/helpers"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/types"
+	pbTypes "github.com/Bridgeless-Project/tss-wrapper-svc/resources/types"
 	"github.com/pkg/errors"
 	abciTypes "github.com/tendermint/tendermint/abci/types"
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
@@ -27,9 +28,10 @@ type Observer struct {
 	logger  *logan.Entry
 	retrier helpers.Retrier
 	blockDb db.BlocksQ
+	tasksDb db.TasksQ
 }
 
-func New(client *http.HTTP, updaterChan chan<- types.Task, logger *logan.Entry, blockDb db.BlocksQ) *Observer {
+func New(client *http.HTTP, updaterChan chan<- types.Task, logger *logan.Entry, blockDb db.BlocksQ, tasksDb db.TasksQ) *Observer {
 	retrier := helpers.NewRetrier(logger, 0, 1*time.Second)
 
 	return &Observer{
@@ -40,6 +42,7 @@ func New(client *http.HTTP, updaterChan chan<- types.Task, logger *logan.Entry, 
 		events:          make(map[string]types.Task),
 		logger:          logger.WithField("component", "observer"),
 		blockDb:         blockDb,
+		tasksDb:         tasksDb,
 	}
 }
 
@@ -147,7 +150,7 @@ func (o *Observer) handleBlock(ctx context.Context, height *int64) error {
 }
 
 // handleEventFromTxResults parses transaction logs, extracts events,
-// and sends matching tasks to the scheduler channel
+// saves tasks to database, and sends them to the scheduler channel
 func (o *Observer) handleEventFromTxResults(txs []*abciTypes.ResponseDeliverTx) error {
 	for _, tx := range txs {
 		var msgs []types.MsgEvent
@@ -170,10 +173,29 @@ func (o *Observer) handleEventFromTxResults(txs []*abciTypes.ResponseDeliverTx) 
 					return errors.Wrap(err, fmt.Sprintf("Failed to parse event attributes: %v", event.Attributes))
 				}
 
+				// Save task to database with status Created
+				taskData, err := task.MarshalData()
+				if err != nil {
+					return errors.Wrap(err, "failed to marshal task data")
+				}
+
+				taskID, err := o.tasksDb.Insert(db.TaskRecord{
+					TaskType: task.GetTaskType(),
+					Status:   pbTypes.ProcessStatus_PROCESS_STATUS_CREATED,
+					Data:     taskData,
+				})
+				if err != nil {
+					return errors.Wrap(err, "failed to save task to database")
+				}
+
+				task.SetID(taskID)
+				o.logger.WithField("task_id", taskID).
+					WithField("task_type", task.GetTaskType()).
+					Info("created new task")
+
 				o.updaterChan <- task
 			}
 		}
-
 	}
 
 	return nil
