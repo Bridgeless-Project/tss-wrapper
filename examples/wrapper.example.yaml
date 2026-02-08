@@ -1,0 +1,34 @@
+# TSS Wrapper Service Configuration
+
+# Logging configuration
+log:
+  level: debug
+  disable_sentry: true
+
+# Database configuration for storing block progress
+db:
+  url: postgres://postgres:postgres@localhost:5432/tss_wrapper?sslmode=disable
+
+# HTTP/gRPC listeners
+listeners:
+  api_grpc_addr: "0.0.0.0:9090"
+  api_http_addr: "0.0.0.0:8080"
+
+# Tendermint connection
+tendermint_connector:
+  tendermint_rpc: "http://localhost:26657"
+
+# TSS binary configuration
+tss:
+  binary_path: "/usr/local/bin/tss"
+  config_path: "/etc/tss/config.yaml"
+  certificates_path: "/etc/tss/certs"
+
+# Events to listen for and their corresponding task types
+# Supported task types: auto_resharing, update
+events:
+  list:
+    - event: "STARTED_NEW_EPOCH"
+      task_type: "auto_resharing"
+    - event: "TSS_UPDATE_REQUESTED"
+      task_type: "update"

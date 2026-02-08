@@ -18,12 +18,18 @@ const (
 )
 
 type EventsConfiger interface {
-	EventsConfig() *EventsConfig
+	EventsConfig() []EventConfig
 }
 
-type EventsConfig struct {
+// EventConfig represents a single event-to-task mapping
+type EventConfig struct {
 	Event    string   `fig:"event,required"`
 	TaskType TaskType `fig:"task_type,required"`
+}
+
+// eventsConfigRaw is used for parsing the config file
+type eventsConfigRaw struct {
+	List []EventConfig `fig:"list,required"`
 }
 
 func NewEventsConfiger(getter kv.Getter) EventsConfiger {
@@ -37,14 +43,14 @@ type eventsConfig struct {
 	once   comfig.Once
 }
 
-func (c *eventsConfig) EventsConfig() *EventsConfig {
+func (c *eventsConfig) EventsConfig() []EventConfig {
 	return c.once.Do(func() interface{} {
 		raw := kv.MustGetStringMap(c.getter, eventsConfigKey)
-		config := new(EventsConfig)
+		config := new(eventsConfigRaw)
 		err := figure.Out(config).With(figure.BaseHooks).From(raw).Please()
 		if err != nil {
-			panic(errors.Wrap(err, "failed to figure out"))
+			panic(errors.Wrap(err, "failed to figure out events config"))
 		}
-		return config
-	}).(*EventsConfig)
+		return config.List
+	}).([]EventConfig)
 }

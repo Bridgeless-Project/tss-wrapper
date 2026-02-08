@@ -1,0 +1,53 @@
+# TSS Binary Configuration
+# This config is managed by the TSS wrapper service
+# The parties.list section is automatically updated based on blockchain events
+
+# Core settings
+core:
+  # Chain ID of the connected blockchain
+  chain_id: "bridge-testnet-1"
+  # Address of this TSS node
+  address: "bridge1abc123def456..."
+  # Key name in keyring
+  key_name: "tss-signer"
+
+# Keyring configuration
+keyring:
+  backend: "file"
+  dir: "/etc/tss/keyring"
+
+# Network settings
+network:
+  # Port to listen for TSS protocol messages
+  listen_port: 9999
+  # TLS configuration for this node
+  tls:
+    cert_path: "/certs/server.crt"
+    key_path: "/certs/server.key"
+
+# Parties configuration
+# This section is automatically managed by the TSS wrapper
+# Active parties are added, inactive parties are removed
+parties:
+  list:
+    - connection: tss-tss1.tss.svc.cluster.local:9999
+      core_address: bridge1uq...
+      tls_certificate_path: /certs/tss-tss1.tss.svc.cluster.local.crt
+    - connection: tss-tss2.tss.svc.cluster.local:9999
+      core_address: bridge1uq...
+      tls_certificate_path: /certs/tss-tss2.tss.svc.cluster.local.crt
+    - connection: tss-tss3.tss.svc.cluster.local:9999
+      core_address: bridge1uq...
+      tls_certificate_path: /certs/tss-tss3.tss.svc.cluster.local.crt
+
+# Threshold settings
+threshold:
+  # Minimum number of parties required to sign
+  min_signers: 2
+  # Total number of parties
+  total_parties: 3
+
+# Logging
+log:
+  level: info
+  format: json

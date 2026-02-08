@@ -50,19 +50,21 @@ func runService(ctx context.Context, cfg config.Config) error {
 
 	blocksDb := pg.NewBlocksQ(cfg.DB())
 
-	task, err := createTask(eventsConfig.TaskType, tssConfig)
-	if err != nil {
-		return errors.Wrap(err, "failed to create task")
-	}
-
 	orchestratorTaskChan := make(chan types.Task)
 	schedulerTaskChan := make(chan types.Task)
 
 	orchestrator := core.NewOrchestrator(tssConfig.BinaryPath, orchestratorTaskChan, logger)
 	taskScheduler := scheduler.New(schedulerTaskChan, orchestratorTaskChan)
-	eventObserver := observer.
-		New(cfg.TendermintHttpClient(), schedulerTaskChan, logger, blocksDb).
-		WithEvent(eventsConfig.Event, task)
+	eventObserver := observer.New(cfg.TendermintHttpClient(), schedulerTaskChan, logger, blocksDb)
+
+	// Register all configured events
+	for _, eventCfg := range eventsConfig {
+		task, err := createTask(eventCfg.TaskType, tssConfig)
+		if err != nil {
+			return errors.Wrap(err, fmt.Sprintf("failed to create task for event %s", eventCfg.Event))
+		}
+		eventObserver.WithEvent(eventCfg.Event, task)
+	}
 
 	eg.Go(func() error {
 		return errors.Wrap(eventObserver.Run(ctx, 0), "error while running observer")
