@@ -19,25 +19,27 @@ import (
 
 type Observer struct {
 	client          *http.HTTP
-	poolingInterval time.Duration // in seconds
-	// map os event Name and appropriate Type
+	pollingInterval time.Duration
+	// map of event name to appropriate Task type
 	events      map[string]types.Task
 	updaterChan chan<- types.Task
 
-	logger  logan.Entry
+	logger  *logan.Entry
 	retrier helpers.Retrier
 	blockDb db.BlocksQ
 }
 
-func New(client *http.HTTP, updaterChan chan<- types.Task, logger *logan.Entry) *Observer {
+func New(client *http.HTTP, updaterChan chan<- types.Task, logger *logan.Entry, blockDb db.BlocksQ) *Observer {
 	retrier := helpers.NewRetrier(logger, 0, 1*time.Second)
 
 	return &Observer{
 		client:          client,
-		poolingInterval: 1 * time.Second, // default polling interval
-		updaterChan:     updaterChan,     //chan that stores the list of events to be processed
+		pollingInterval: 1 * time.Second, // default polling interval
+		updaterChan:     updaterChan,
 		retrier:         retrier,
 		events:          make(map[string]types.Task),
+		logger:          logger.WithField("component", "observer"),
+		blockDb:         blockDb,
 	}
 }
 
@@ -46,13 +48,14 @@ func (o *Observer) WithEvent(event string, eventType types.Task) *Observer {
 	return o
 }
 
-func (o *Observer) WithPoolingInterval(interval time.Duration) *Observer {
-	o.poolingInterval = interval
+func (o *Observer) WithPollingInterval(interval time.Duration) *Observer {
+	o.pollingInterval = interval
 	return o
 }
 
 func (o *Observer) Run(ctx context.Context, startHeight int64) error {
-	ticker := time.NewTicker(o.poolingInterval)
+	ticker := time.NewTicker(o.pollingInterval)
+	defer ticker.Stop()
 
 	if startHeight == 0 {
 		latestHeight, err := o.getCurrentHeight(ctx)
@@ -79,7 +82,7 @@ func (o *Observer) Run(ctx context.Context, startHeight int64) error {
 			}
 
 			if startHeight > currentHeight {
-				o.logger.Debug("Waiting for next block, currentHeight:", currentHeight)
+				o.logger.WithField("currentHeight", currentHeight).Debug("waiting for next block")
 				continue
 			}
 
@@ -90,8 +93,7 @@ func (o *Observer) Run(ctx context.Context, startHeight int64) error {
 			if err = o.blockDb.UpdateLatestBlockId(db.LatestBlock{BlockId: startHeight}); err != nil {
 				o.logger.WithError(err).
 					WithField("blockNumber", startHeight).
-					Error("failed to update latest block height")
-				startHeight++
+					Error("failed to update latest block height, will retry")
 				continue
 			}
 
@@ -139,13 +141,13 @@ func (o *Observer) handleBlock(ctx context.Context, height *int64) error {
 
 	err := o.handleEventFromTxResults(blockResult.TxsResults)
 	if err != nil {
-		return errors.Wrap(err, "")
+		return errors.Wrap(err, "failed to handle events from tx results")
 	}
 	return nil
 }
 
-// this functuion is used to get events from transactions in a block, it will parse the logs of the transactions and
-// extract the events, then it will send the events to the scheduler channel
+// handleEventFromTxResults parses transaction logs, extracts events,
+// and sends matching tasks to the scheduler channel
 func (o *Observer) handleEventFromTxResults(txs []*abciTypes.ResponseDeliverTx) error {
 	for _, tx := range txs {
 		var msgs []types.MsgEvent

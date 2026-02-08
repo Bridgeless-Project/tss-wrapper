@@ -2,7 +2,7 @@ package core
 
 import (
 	"context"
-	"log"
+	"fmt"
 	"os"
 	"os/exec"
 
@@ -34,55 +34,59 @@ func (o *Orchestrator) StartDefaultMode(ctx context.Context) error {
 	o.cmd.Stderr = os.Stderr
 
 	if err := o.cmd.Start(); err != nil {
-		log.Printf("CRITICAL: Failed to start default mode: %v", err)
 		return errors.Wrap(err, "failed to start default mode")
 	}
+
+	o.logger.WithField("binary", o.binaryPath).Info("started default mode")
 	return nil
 }
 
 func (o *Orchestrator) Stop() error {
 	if o.cmd == nil || o.cmd.Process == nil {
-		log.Printf("WARNING: No process to stop")
+		o.logger.Warn("no process to stop")
 		return nil
 	}
 
 	if err := o.cmd.Process.Kill(); err != nil {
-		log.Printf("CRITICAL: Failed to stop process: %v", err)
-		return errors.Wrap(err, "failed to stop process")
+		return errors.Wrap(err, "failed to kill process")
 	}
 
+	// Wait for process to fully exit to avoid zombie processes
+	// and ensure clean state before starting new process
+	if err := o.cmd.Wait(); err != nil {
+		o.logger.WithError(err).Debug("process wait completed")
+	}
+
+	o.cmd = nil
 	return nil
 }
 
 func (o *Orchestrator) Run(ctx context.Context) error {
-	err := o.StartDefaultMode(ctx)
-	if err != nil {
+	if err := o.StartDefaultMode(ctx); err != nil {
 		return err
 	}
 
 	for {
 		select {
 		case <-ctx.Done():
-
-			//TODO implement graceful shutdown
+			o.logger.Info("shutting down orchestrator")
+			if err := o.Stop(); err != nil {
+				o.logger.WithError(err).Warn("failed to stop process during shutdown")
+			}
 			return nil
 
 		case task := <-o.taskChan:
-			log.Printf("Received task: %v", task)
+			o.logger.WithField("task", fmt.Sprintf("%T", task)).Info("received task")
 
-			if err = o.Stop(); err != nil {
-				log.Printf("CRITICAL: Failed to stop process: %v", err)
+			if err := o.Stop(); err != nil {
 				return errors.Wrap(err, "failed to stop process")
 			}
-			if err = task.Execute(ctx); err != nil {
-				log.Printf("CRITICAL: Failed to execute task: %v", err)
+			if err := task.Execute(ctx); err != nil {
 				return errors.Wrap(err, "failed to execute task")
 			}
-			if err = o.StartDefaultMode(ctx); err != nil {
-				log.Printf("CRITICAL: Failed to start default mode: %v", err)
-				return errors.Wrap(err, "failed to start default mode")
+			if err := o.StartDefaultMode(ctx); err != nil {
+				return errors.Wrap(err, "failed to restart default mode after task")
 			}
 		}
-
 	}
 }

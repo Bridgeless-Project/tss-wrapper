@@ -1,7 +1,6 @@
 package config
 
 import (
-	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/types"
 	"github.com/pkg/errors"
 	"gitlab.com/distributed_lab/figure/v3"
 	"gitlab.com/distributed_lab/kit/comfig"
@@ -10,13 +9,21 @@ import (
 
 const eventsConfigKey = "events"
 
+// TaskType represents the type of task to create for an event
+type TaskType string
+
+const (
+	TaskTypeAutoResharing TaskType = "auto_resharing"
+	TaskTypeUpdate        TaskType = "update"
+)
+
 type EventsConfiger interface {
 	EventsConfig() *EventsConfig
 }
 
 type EventsConfig struct {
-	Event string     `fig:"event,required"`
-	Task  types.Task `fig:"task,required"`
+	Event    string   `fig:"event,required"`
+	TaskType TaskType `fig:"task_type,required"`
 }
 
 func NewEventsConfiger(getter kv.Getter) EventsConfiger {

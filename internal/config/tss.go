@@ -12,10 +12,10 @@ const (
 )
 
 type TSSConfiger interface {
-	TSSConfig() *tssConfig
+	TSSConfig() *TSSConfig
 }
 
-type tssConfig struct {
+type TSSConfig struct {
 	BinaryPath       string `fig:"binary_path,required"`
 	ConfigPath       string `fig:"config_path,required"`
 	CertificatesPath string `fig:"certificates_path,required"`
@@ -32,13 +32,13 @@ func NewTSSConfiger(getter kv.Getter) TSSConfiger {
 	}
 }
 
-func (t *tssConfiger) TSSConfig() *tssConfig {
+func (t *tssConfiger) TSSConfig() *TSSConfig {
 	return t.once.Do(func() interface{} {
-		var cfg tssConfig
+		var cfg TSSConfig
 
 		if err := figure.Out(&cfg).From(kv.MustGetStringMap(t.getter, tssConfigKey)).Please(); err != nil {
-			panic(errors.Wrap(err, "failed to figure out tendermint connector config"))
+			panic(errors.Wrap(err, "failed to figure out tss config"))
 		}
 		return &cfg
-	}).(*tssConfig)
+	}).(*TSSConfig)
 }

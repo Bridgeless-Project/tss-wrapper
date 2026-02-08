@@ -1,4 +1,4 @@
-name: Build relayer-svc docker image
+name: Build tss-wrapper-svc docker image
 on:
   push:
     branches:
