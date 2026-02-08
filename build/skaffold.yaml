@@ -1,0 +1,11 @@
+apiVersion: skaffold/v2beta28
+kind: Config
+build:
+  local:
+    useBuildkit: true
+  artifacts:
+    - image: tss-wrapper-svc
+      docker:
+        dockerfile: build/Dockerfile
+        buildArgs:
+          CI_ACCESS_TOKEN: "{{.CI_ACCESS_TOKEN}}"

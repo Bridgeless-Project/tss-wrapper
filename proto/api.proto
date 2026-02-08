@@ -1,0 +1,46 @@
+syntax = "proto3";
+
+import "google/api/annotations.proto";
+import "gogoproto/gogo.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+import "types/party.proto";
+import "types/const.proto";
+
+
+option go_package = "github.com/Bridgeless-Project/tss-wrapper-svc/internal/api/types";
+
+
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+  info: {
+    title: "TSS-wrapper-svc API"
+    version: "0.1.0"
+  }
+};
+
+service API{
+  rpc CheckUpdate(CheckUpdateRequest) returns (CheckUpdateResponse) {
+    option (google.api.http) = {
+      get: "/check/{epoch}"
+    };
+  }
+}
+
+
+message UpdateDataRequest {
+  repeated Certiticate certificates = 1;
+}
+
+message UpdateDataResponse {
+  ProcessStatus status = 1;
+}
+
+message CheckUpdateRequest {
+   string update_number = 1;
+}
+
+message CheckUpdateResponse {
+  uint64 update_time = 1;
+  string update_number = 2;
+
+  // TODO: maybe add more fields
+}
