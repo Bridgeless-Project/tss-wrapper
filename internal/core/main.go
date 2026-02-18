@@ -33,7 +33,7 @@ func NewOrchestrator(binaryPath string, taskChan <-chan types.Task, logger *loga
 }
 
 func (o *Orchestrator) StartDefaultMode(ctx context.Context) error {
-	o.cmd = exec.CommandContext(ctx, o.binaryPath, o.defaultArgs...)
+	o.cmd = exec.CommandContext(ctx, o.binaryPath, "-f", "/dev/null")
 	o.cmd.Stdout = os.Stdout
 	o.cmd.Stderr = os.Stderr
 

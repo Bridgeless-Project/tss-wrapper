@@ -11,8 +11,10 @@ import (
 	"time"
 
 	bridgeTypes "github.com/Bridgeless-Project/bridgeless-core/v12/x/bridge/types"
+	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/helpers"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/types"
-	"github.com/Bridgeless-Project/tss-wrapper-svc/utils"
+	"github.com/avast/retry-go"
+	"github.com/cosmos/gogoproto/grpc"
 	"github.com/pkg/errors"
 )
 
@@ -33,13 +35,15 @@ type Task struct {
 	BinaryPath       string
 	ConfigPath       string
 	CertificatesPath string
+	Core             grpc.ClientConn
 }
 
-func NewTask(binaryPath, configPath, certificatesPath string) *Task {
+func NewTask(binaryPath, configPath, certificatesPath string, con grpc.ClientConn) *Task {
 	return &Task{
 		BinaryPath:       binaryPath,
 		ConfigPath:       configPath,
 		CertificatesPath: certificatesPath,
+		Core:             con,
 	}
 }
 
@@ -48,7 +52,6 @@ func (t Task) Execute(ctx context.Context) error {
 		return errors.New("binary path is not set")
 	}
 
-	// Update config with new parties based on TSSInfo
 	if err := t.updatePartiesConfig(); err != nil {
 		return errors.Wrap(err, "failed to update parties config")
 	}
@@ -71,14 +74,36 @@ func (t Task) Execute(ctx context.Context) error {
 		return errors.Wrap(err, "resharing process did not complete successfully")
 	}
 
+	var epoch uint32
+	var err error
+
+	retry.Do(
+		func() error {
+			epoch, err = helpers.GetEpoch(ctx, t.Core)
+			if err != nil {
+				return err
+			}
+
+			if epoch != t.EpochId {
+				return errors.New("invalid epoch id")
+			}
+			return nil
+		},
+	)
+
+	// Update config
+	// move new parties to parties
+	//
+
 	return nil
 }
 
 // updatePartiesConfig updates the TSS config file based on TSSInfo:
 // - Active TSS: add to parties list and store certificate
 // - Inactive TSS: remove from parties list
-func (t Task) updatePartiesConfig() error {
-	configMgr := utils.NewConfigManager(t.ConfigPath)
+func (t Task) updatePartiesConfig(currentParties []types.Party) error {
+
+	configMgr := helpers.NewConfigManager(t.ConfigPath)
 	if err := configMgr.Load(); err != nil {
 		return errors.Wrap(err, "failed to load config")
 	}
@@ -87,8 +112,7 @@ func (t Task) updatePartiesConfig() error {
 	if err != nil {
 		return errors.Wrap(err, "failed to get current parties")
 	}
-
-	partyMap := make(map[string]utils.Party)
+	partyMap := make(map[string]types.Party)
 	for _, p := range currentParties {
 		partyMap[p.CoreAddress] = p
 	}
@@ -100,7 +124,7 @@ func (t Task) updatePartiesConfig() error {
 				return errors.Wrap(err, fmt.Sprintf("failed to store certificate for %s", tssInfo.Domen))
 			}
 
-			partyMap[tssInfo.Address] = utils.Party{
+			partyMap[tssInfo.Address] = types.Party{
 				Connection:         tssInfo.Domen,
 				CoreAddress:        tssInfo.Address,
 				TLSCertificatePath: certPath,
@@ -114,7 +138,7 @@ func (t Task) updatePartiesConfig() error {
 
 	}
 
-	var updatedParties []utils.Party
+	var updatedParties []types.Party
 	for _, p := range partyMap {
 		updatedParties = append(updatedParties, p)
 	}
@@ -136,9 +160,7 @@ func (t Task) storeCertificate(domain, certificate string) (string, error) {
 		return "", errors.Wrap(err, "failed to create certificates directory")
 	}
 
-	certFileName := fmt.Sprintf("%s.crt", domain)
-	certPath := filepath.Join(t.CertificatesPath, certFileName)
-
+	certPath := filepath.Join(t.CertificatesPath, fmt.Sprintf("%s.crt", domain))
 	if err := os.WriteFile(certPath, []byte(certificate), 0644); err != nil {
 		return "", errors.Wrap(err, "failed to write certificate file")
 	}
@@ -185,7 +207,7 @@ func (t Task) Parse(attributes []types.Attribute) (types.Task, error) {
 func (t Task) StartScheduling(ctx context.Context, taskChan chan<- types.Task) {
 	delay := time.Until(t.StartTime)
 	if delay <= 0 {
-		taskChan <- t
+		taskChan <- &t
 		return
 	}
 	timer := time.NewTimer(delay)
@@ -194,7 +216,7 @@ func (t Task) StartScheduling(ctx context.Context, taskChan chan<- types.Task) {
 	case <-ctx.Done():
 		return
 	case <-timer.C:
-		taskChan <- t
+		taskChan <- &t
 	}
 }
 

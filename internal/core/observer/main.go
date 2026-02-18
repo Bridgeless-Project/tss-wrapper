@@ -10,6 +10,7 @@ import (
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/helpers"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/types"
 	pbTypes "github.com/Bridgeless-Project/tss-wrapper-svc/resources/types"
+	"github.com/cosmos/gogoproto/grpc"
 	"github.com/pkg/errors"
 	abciTypes "github.com/tendermint/tendermint/abci/types"
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
@@ -31,8 +32,8 @@ type Observer struct {
 	tasksDb db.TasksQ
 }
 
-func New(client *http.HTTP, updaterChan chan<- types.Task, logger *logan.Entry, blockDb db.BlocksQ, tasksDb db.TasksQ) *Observer {
-	retrier := helpers.NewRetrier(logger, 0, 1*time.Second)
+func New(client *http.HTTP, grpcClient grpc.ClientConn, updaterChan chan<- types.Task, logger *logan.Entry, blockDb db.BlocksQ, tasksDb db.TasksQ) *Observer {
+	retrier := helpers.NewRetrier(logger, 5, 1*time.Second)
 
 	return &Observer{
 		client:          client,
@@ -71,6 +72,7 @@ func (o *Observer) Run(ctx context.Context, startHeight int64) error {
 	if err := o.blockDb.Insert(db.LatestBlock{BlockId: startHeight}); err != nil {
 		return errors.Wrap(err, "failed to insert latest block")
 	}
+
 	for {
 		select {
 		case <-ctx.Done():

@@ -1,11 +1,18 @@
 package config
 
 import (
+	"crypto/tls"
+	"regexp"
+	"time"
+
 	"github.com/pkg/errors"
 	"github.com/tendermint/tendermint/rpc/client/http"
 	"gitlab.com/distributed_lab/figure/v3"
 	"gitlab.com/distributed_lab/kit/comfig"
 	"gitlab.com/distributed_lab/kit/kv"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/keepalive"
 )
 
 const (
@@ -14,6 +21,7 @@ const (
 
 type TendermintConnector interface {
 	TendermintHttpClient() *http.HTTP
+	TendermintGrpcClient() *grpc.ClientConn
 }
 
 type tenderminter struct {
@@ -35,6 +43,24 @@ func (t *tenderminter) TendermintHttpClient() *http.HTTP {
 	return client
 }
 
+func (t *tenderminter) TendermintGrpcClient() *grpc.ClientConn {
+	cfg := t.config()
+
+	tlsConfig := &tls.Config{
+		InsecureSkipVerify: isHTTPS(cfg.GRPC),
+	}
+
+	con, err := grpc.Dial(cfg.GRPC, grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)), grpc.WithKeepaliveParams(keepalive.ClientParameters{
+		Time:    10 * time.Second,
+		Timeout: 20 * time.Second,
+	}))
+	if err != nil {
+		panic(errors.Wrap(err, "failed to create tendermint grpc client"))
+	}
+
+	return con
+}
+
 func NewTendermintConnector(getter kv.Getter) TendermintConnector {
 	return &tenderminter{
 		getter: getter,
@@ -42,7 +68,8 @@ func NewTendermintConnector(getter kv.Getter) TendermintConnector {
 }
 
 type tenderminterCfg struct {
-	RPC string `fig:"tendermint_rpc,required"`
+	RPC  string `fig:"tendermint_rpc,required"`
+	GRPC string `fig:"tendermint_grpc,required"`
 }
 
 func (t *tenderminter) config() *tenderminterCfg {
@@ -54,4 +81,13 @@ func (t *tenderminter) config() *tenderminterCfg {
 		}
 		return &cfg
 	}).(*tenderminterCfg)
+}
+
+func isHTTPS(domen string) bool {
+	ok, err := regexp.Match("https:", []byte(domen))
+	if err != nil || !ok {
+		return false
+	}
+
+	return true
 }

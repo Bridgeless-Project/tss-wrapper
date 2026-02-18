@@ -59,7 +59,14 @@ func runService(ctx context.Context, cfg config.Config) error {
 
 	orchestrator := core.NewOrchestrator(tssConfig.BinaryPath, orchestratorTaskChan, logger, tasksDb)
 	taskScheduler := scheduler.New(schedulerTaskChan, orchestratorTaskChan, tasksDb, logger)
-	eventObserver := observer.New(cfg.TendermintHttpClient(), schedulerTaskChan, logger, blocksDb, tasksDb)
+	eventObserver := observer.New(
+		cfg.TendermintHttpClient(),
+		cfg.TendermintGrpcClient(),
+		schedulerTaskChan,
+		logger,
+		blocksDb,
+		tasksDb,
+	)
 
 	for _, eventCfg := range eventsConfig {
 		task, err := createTask(eventCfg.TaskType, tssConfig)
@@ -69,7 +76,7 @@ func runService(ctx context.Context, cfg config.Config) error {
 		eventObserver.WithEvent(eventCfg.Event, task)
 	}
 
-	// Load and schedule incomplete tasks from database
+	// Load and schedule incomplete tasks from the database
 	if err := loadIncompleteTasks(ctx, tasksDb, taskScheduler, tssConfig, logger); err != nil {
 		return errors.Wrap(err, "failed to load incomplete tasks")
 	}

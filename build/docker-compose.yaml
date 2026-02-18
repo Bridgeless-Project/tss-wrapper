@@ -1,0 +1,37 @@
+services:
+  db:
+    container_name: db
+    image: postgres
+    restart: unless-stopped
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=tss-wrapper
+      - POSTGRES_PASSWORD=tss-wrapper
+      - POSTGRES_DB=db
+      - PGDATA=/
+    volumes:
+      - pg-data:/pgdata
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U tss-wrapper -d db" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+      start_period: 5s
+
+#  tss-wrapper-svc:
+#    build:
+#      context: ../
+#      dockerfile: build/Dockerfile
+#    ports:
+#      - "8080:8080"
+#    container_name: tss-wrapper-svc
+#    entrypoint: sh -c "tss-wrapper-svc service migrate up && tss-wrapper-svc service run"
+#    depends_on:
+#      db:
+#         condition: service_healthy
+#    volumes:
+#      - ./configs/config.local.yaml:/config.yaml
+
+volumes:
+  pg-data:
