@@ -6,7 +6,7 @@ require (
 	github.com/Bridgeless-Project/bridgeless-core/v12 v12.1.30-rc1
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/avast/retry-go v3.0.0+incompatible
-	github.com/cosmos/gogoproto v1.6.0
+	github.com/cosmos/gogoproto v1.5.0
 	github.com/pkg/errors v0.9.1
 	github.com/rubenv/sql-migrate v1.8.1
 	github.com/spf13/cobra v1.10.2
