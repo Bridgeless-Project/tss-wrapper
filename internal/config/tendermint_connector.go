@@ -45,12 +45,11 @@ func (t *tenderminter) TendermintHttpClient() *http.HTTP {
 
 func (t *tenderminter) TendermintGrpcClient() *grpc.ClientConn {
 	cfg := t.config()
-
 	tlsConfig := &tls.Config{
 		InsecureSkipVerify: isHTTPS(cfg.GRPC),
 	}
 
-	con, err := grpc.Dial(cfg.GRPC, grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)), grpc.WithKeepaliveParams(keepalive.ClientParameters{
+	con, err := grpc.Dial(cfg.RPC, grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)), grpc.WithKeepaliveParams(keepalive.ClientParameters{
 		Time:    10 * time.Second,
 		Timeout: 20 * time.Second,
 	}))

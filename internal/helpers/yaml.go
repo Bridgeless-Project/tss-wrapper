@@ -9,15 +9,16 @@ import (
 )
 
 const (
-	partiesKey     = "parties"
-	newPartiesKey  = "new_parties"
+	PartiesKey    = "parties"
+	NewPartiesKey = "new_parties"
+)
+const (
 	chainsKey      = "chains"
 	listKey        = "list"
 	connectionsKey = "connections"
 	typeKey        = "type"
-
-	newKey   = "new"
-	epochKey = "epoch"
+	newKey         = "new"
+	epochKey       = "epoch"
 )
 
 type ConfigManager struct {
@@ -122,7 +123,7 @@ func (c *ConfigManager) SetParties(key string, parties []types.Party) {
 // -------------------- EPOCH ---------------------
 
 func (c *ConfigManager) GetEpoch() (uint32, error) {
-	partiesMap, ok := c.rawConfig[newPartiesKey].(map[string]interface{})
+	partiesMap, ok := c.rawConfig[NewPartiesKey].(map[string]interface{})
 	if !ok {
 		return 0, errors.New("invalid parties format")
 	}
@@ -136,7 +137,7 @@ func (c *ConfigManager) GetEpoch() (uint32, error) {
 }
 
 func (c *ConfigManager) SetEpoch(epoch uint32) error {
-	partiesMap, ok := c.rawConfig[newPartiesKey].(map[string]interface{})
+	partiesMap, ok := c.rawConfig[NewPartiesKey].(map[string]interface{})
 	if !ok {
 		return errors.New("invalid parties format")
 	}
@@ -147,7 +148,7 @@ func (c *ConfigManager) SetEpoch(epoch uint32) error {
 }
 
 func (c *ConfigManager) SetNew(isNew bool) error {
-	partiesMap, ok := c.rawConfig[newPartiesKey].(map[string]interface{})
+	partiesMap, ok := c.rawConfig[NewPartiesKey].(map[string]interface{})
 	if !ok {
 		return errors.New("invalid parties format")
 	}

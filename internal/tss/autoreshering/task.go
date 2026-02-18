@@ -101,17 +101,17 @@ func (t Task) Execute(ctx context.Context) error {
 // updatePartiesConfig updates the TSS config file based on TSSInfo:
 // - Active TSS: add to parties list and store certificate
 // - Inactive TSS: remove from parties list
-func (t Task) updatePartiesConfig(currentParties []types.Party) error {
-
+func (t Task) updatePartiesConfig() error {
 	configMgr := helpers.NewConfigManager(t.ConfigPath)
 	if err := configMgr.Load(); err != nil {
 		return errors.Wrap(err, "failed to load config")
 	}
 
-	currentParties, err := configMgr.GetParties()
+	currentParties, err := configMgr.GetParties(helpers.PartiesKey)
 	if err != nil {
 		return errors.Wrap(err, "failed to get current parties")
 	}
+
 	partyMap := make(map[string]types.Party)
 	for _, p := range currentParties {
 		partyMap[p.CoreAddress] = p
@@ -143,7 +143,7 @@ func (t Task) updatePartiesConfig(currentParties []types.Party) error {
 		updatedParties = append(updatedParties, p)
 	}
 
-	configMgr.SetParties(updatedParties)
+	configMgr.SetParties(helpers.PartiesKey, updatedParties)
 	if err = configMgr.Save(); err != nil {
 		return errors.Wrap(err, "failed to save config")
 	}
