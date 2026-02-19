@@ -8,8 +8,6 @@ on:
 
 env:
   CI_ACCESS_TOKEN: ${{ secrets.CI_ACCESS_TOKEN }}
-  DOCKER_API_VERSION: "1.44"
-
 
 jobs:
   converge-github:
