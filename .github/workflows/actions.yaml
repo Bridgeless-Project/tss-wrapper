@@ -22,7 +22,7 @@ jobs:
       - name: Set Docker API version
         uses: docker/setup-docker-action@v3
         with:
-          version: v29.2.0
+          version: 27.1
 
       - name: Log in to registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $ --password-stdin
