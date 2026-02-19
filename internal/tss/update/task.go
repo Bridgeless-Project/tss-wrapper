@@ -4,6 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
+	"net/http"
+	"os"
 	"time"
 
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/types"
@@ -31,7 +34,7 @@ func NewTask() *Task {
 }
 
 func (t Task) Execute(ctx context.Context) error {
-	if err := t.DownloadTSSBinary(ctx); err != nil {
+	if err := t.downloadBinary(t.Link, ""); err != nil {
 		return errors.Wrap(err, "failed to download TSS binary")
 	}
 	return nil
@@ -68,13 +71,8 @@ func (t Task) StartScheduling(ctx context.Context, taskChan chan<- types.Task) {
 	}
 }
 
-func (t Task) Name() string {
+func (t Task) GetName() string {
 	return "UpdateTask"
-}
-
-func (t Task) DownloadTSSBinary(ctx context.Context) error {
-	// TODO: Implement logic to download the TSS binary from t.Link
-	return nil
 }
 
 func (t Task) GetID() int64 {
@@ -111,4 +109,30 @@ func (t *Task) UnmarshalData(data string) error {
 	t.Version = td.Version
 	t.StartTime = time.Unix(td.StartTime, 0)
 	return nil
+}
+
+func (t Task) downloadBinary(url string, filepath string) error {
+	out, err := os.Create(filepath)
+	if err != nil {
+		return err
+	}
+	defer out.Close()
+
+	resp, err := http.Get(url)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		return fmt.Errorf("bad status: %s", resp.Status)
+	}
+
+	_, err = io.Copy(out, resp.Body)
+	if err != nil {
+		return err
+	}
+
+	return nil
+
 }

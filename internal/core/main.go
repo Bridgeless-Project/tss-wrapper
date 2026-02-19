@@ -55,12 +55,6 @@ func (o *Orchestrator) Stop() error {
 		return errors.Wrap(err, "failed to kill process")
 	}
 
-	// Wait for process to fully exit to avoid zombie processes
-	// and ensure clean state before starting new process
-	if err := o.cmd.Wait(); err != nil {
-		o.logger.WithError(err).Debug("process wait completed")
-	}
-
 	o.cmd = nil
 	return nil
 }

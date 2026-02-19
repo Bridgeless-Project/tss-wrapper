@@ -17,7 +17,6 @@ import (
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/tss/update"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/types"
 	pbTypes "github.com/Bridgeless-Project/tss-wrapper-svc/resources/types"
-	"github.com/cosmos/gogoproto/grpc"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"gitlab.com/distributed_lab/logan/v3"
@@ -70,7 +69,7 @@ func runService(ctx context.Context, cfg config.Config) error {
 	)
 
 	for _, eventCfg := range eventsConfig {
-		task, err := createTask(eventCfg.TaskType, tssConfig, cfg.TendermintGrpcClient())
+		task, err := createTask(eventCfg.TaskType, cfg)
 		if err != nil {
 			return errors.Wrap(err, fmt.Sprintf("failed to create task for event %s", eventCfg.Event))
 		}
@@ -82,15 +81,19 @@ func runService(ctx context.Context, cfg config.Config) error {
 		ctx,
 		tasksDb,
 		taskScheduler,
-		tssConfig,
+		cfg,
 		logger,
-		cfg.TendermintGrpcClient(),
 	); err != nil {
 		return errors.Wrap(err, "failed to load incomplete tasks")
 	}
 
+	lastBlock, err := blocksDb.GetLatestBlock()
+	if err != nil {
+		return errors.Wrap(err, "failed to get latest block")
+	}
+
 	eg.Go(func() error {
-		return errors.Wrap(eventObserver.Run(ctx, 0), "error while running observer")
+		return errors.Wrap(eventObserver.Run(ctx, lastBlock), "error while running observer")
 	})
 
 	eg.Go(func() error {
@@ -109,9 +112,8 @@ func loadIncompleteTasks(
 	ctx context.Context,
 	tasksDb db.TasksQ,
 	taskScheduler *scheduler.Scheduler,
-	tssConfig *config.TSSConfig,
+	cfg config.Config,
 	logger *logan.Entry,
-	conn grpc.ClientConn,
 ) error {
 	incompleteTasks, err := tasksDb.GetIncomplete()
 	if err != nil {
@@ -121,7 +123,7 @@ func loadIncompleteTasks(
 	logger.WithField("count", len(incompleteTasks)).Info("loading incomplete tasks from database")
 
 	for _, record := range incompleteTasks {
-		task, err := createTaskFromRecord(record, tssConfig, conn)
+		task, err := createTaskFromRecord(record, cfg)
 		if err != nil {
 			logger.WithError(err).
 				WithField("task_id", record.ID).
@@ -150,14 +152,13 @@ func loadIncompleteTasks(
 }
 
 // createTask creates a task template based on the task type and TSS config
-func createTask(taskType config.TaskType, tssConfig *config.TSSConfig, core grpc.ClientConn) (types.Task, error) {
+func createTask(taskType config.TaskType, cfg config.Config) (types.Task, error) {
 	switch taskType {
 	case config.TaskTypeAutoResharing:
 		return autoresharing.NewTask(
-			tssConfig.BinaryPath,
-			tssConfig.ConfigPath,
-			tssConfig.CertificatesPath,
-			core,
+			cfg.TSSConfig(),
+			cfg.TendermintGrpcClient(),
+			cfg.TendermintHttpClient(),
 		), nil
 	case config.TaskTypeUpdate:
 		return update.NewTask(), nil
@@ -167,16 +168,15 @@ func createTask(taskType config.TaskType, tssConfig *config.TSSConfig, core grpc
 }
 
 // createTaskFromRecord creates a task from a database record
-func createTaskFromRecord(record db.TaskRecord, tssConfig *config.TSSConfig, core grpc.ClientConn) (types.Task, error) {
+func createTaskFromRecord(record db.TaskRecord, cfg config.Config) (types.Task, error) {
 	var task types.Task
 
 	switch record.TaskType {
 	case autoresharing.TaskType:
 		t := autoresharing.NewTask(
-			tssConfig.BinaryPath,
-			tssConfig.ConfigPath,
-			tssConfig.CertificatesPath,
-			core,
+			cfg.TSSConfig(),
+			cfg.TendermintGrpcClient(),
+			cfg.TendermintHttpClient(),
 		)
 		if err := t.UnmarshalData(record.Data); err != nil {
 			return nil, errors.Wrap(err, "failed to unmarshal autoresharing task data")

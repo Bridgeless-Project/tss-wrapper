@@ -2,6 +2,7 @@ package helpers
 
 import (
 	"os"
+	"time"
 
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/types"
 	"github.com/pkg/errors"
@@ -19,6 +20,10 @@ const (
 	typeKey        = "type"
 	newKey         = "new"
 	epochKey       = "epoch"
+	tssKey         = "tss"
+	thresholdKey   = "threshold"
+	sessionIdKey   = "session_id"
+	startTimeKey   = "start_time"
 )
 
 type ConfigManager struct {
@@ -181,6 +186,20 @@ func (c *ConfigManager) UpdateBitcoinWallet(address string, epoch uint32, chainT
 			chainMap["epoch"] = epoch
 		}
 	}
+
+	return nil
+}
+
+// ------------------ START TIME ------------------
+
+func (c *ConfigManager) SetStartInfo(timestamp time.Time, threshold uint32) error {
+	tssMap, ok := c.rawConfig[tssKey].(map[string]interface{})
+	if !ok {
+		return errors.New("invalid tss format")
+	}
+
+	tssMap[startTimeKey] = timestamp
+	tssMap[thresholdKey] = threshold
 
 	return nil
 }

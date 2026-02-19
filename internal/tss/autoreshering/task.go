@@ -10,12 +10,14 @@ import (
 	"strconv"
 	"time"
 
-	bridgeTypes "github.com/Bridgeless-Project/bridgeless-core/v12/x/bridge/types"
+	bridgetypes "github.com/Bridgeless-Project/bridgeless-core/v12/x/bridge/types"
+	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/config"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/helpers"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/types"
 	"github.com/avast/retry-go"
 	"github.com/cosmos/gogoproto/grpc"
 	"github.com/pkg/errors"
+	"github.com/tendermint/tendermint/rpc/client/http"
 )
 
 const TaskType = "auto_resharing"
@@ -23,28 +25,127 @@ const TaskType = "auto_resharing"
 // taskData represents the serializable part of the task for database storage
 type taskData struct {
 	EpochId   uint32                `json:"epoch_id"`
-	TssInfo   []bridgeTypes.TSSInfo `json:"tss_info"`
+	TssInfo   []bridgetypes.TSSInfo `json:"tss_info"`
 	StartTime int64                 `json:"start_time"`
 }
 
 type Task struct {
-	id               int64 // database ID
-	EpochId          uint32
-	TssInfo          []bridgeTypes.TSSInfo
+	id          int64 // database ID
+	EpochId     uint32
+	TssInfo     []bridgetypes.TSSInfo
+	CoreAddress string
+
 	StartTime        time.Time
 	BinaryPath       string
 	ConfigPath       string
 	CertificatesPath string
-	Core             grpc.ClientConn
+
+	GRPCCore grpc.ClientConn
+	HTTPCore *http.HTTP
 }
 
-func NewTask(binaryPath, configPath, certificatesPath string, con grpc.ClientConn) *Task {
+func NewTask(tssconfig *config.TSSConfig, grpccon grpc.ClientConn, httpcon *http.HTTP) *Task {
 	return &Task{
-		BinaryPath:       binaryPath,
-		ConfigPath:       configPath,
-		CertificatesPath: certificatesPath,
-		Core:             con,
+		BinaryPath:       tssconfig.BinaryPath,
+		ConfigPath:       tssconfig.ConfigPath,
+		CertificatesPath: tssconfig.CertificatesPath,
+		CoreAddress:      tssconfig.CoreAddress,
+		GRPCCore:         grpccon,
+		HTTPCore:         httpcon,
 	}
+}
+
+func (t Task) GetTime() time.Time {
+	return t.StartTime
+}
+
+func (t Task) GetName() string {
+	return "AutoResharingTask"
+}
+
+func (t Task) GetID() int64 {
+	return t.id
+}
+
+func (t Task) GetTaskType() string {
+	return TaskType
+}
+
+func (t *Task) SetID(id int64) {
+	t.id = id
+}
+
+func (t Task) Parse(attributes []types.Attribute) (types.Task, error) {
+	task := &Task{
+		BinaryPath:       t.BinaryPath,
+		ConfigPath:       t.ConfigPath,
+		CertificatesPath: t.CertificatesPath,
+	}
+
+	for _, attribute := range attributes {
+		switch attribute.Key {
+		case bridgetypes.AttributeTssInfo:
+			if err := json.Unmarshal([]byte(attribute.Value), &task.TssInfo); err != nil {
+				return nil, errors.Wrap(err, "failed to unmarshal tss info")
+			}
+		case bridgetypes.AttributeEpochId:
+			epoch, err := strconv.ParseUint(attribute.Value, 10, 32)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to parse epoch id")
+			}
+			task.EpochId = uint32(epoch)
+		case bridgetypes.AttributeEpochStartTime:
+			startTime, err := strconv.ParseInt(attribute.Value, 10, 64)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to parse start time")
+			}
+			task.StartTime = time.Unix(startTime, 0)
+		default:
+			continue
+		}
+	}
+	return task, nil
+}
+
+func (t Task) StartScheduling(ctx context.Context, taskChan chan<- types.Task) {
+	delay := time.Until(t.StartTime)
+	if delay <= 0 {
+		taskChan <- &t
+		return
+	}
+	timer := time.NewTimer(delay)
+	defer timer.Stop()
+
+	select {
+	case <-ctx.Done():
+		return
+	case <-timer.C:
+		taskChan <- &t
+	}
+}
+
+func (t Task) MarshalData() (string, error) {
+	data := taskData{
+		EpochId:   t.EpochId,
+		TssInfo:   t.TssInfo,
+		StartTime: t.StartTime.Unix(),
+	}
+	bytes, err := json.Marshal(data)
+	if err != nil {
+		return "", errors.Wrap(err, "failed to marshal task data")
+	}
+	return string(bytes), nil
+}
+
+func (t *Task) UnmarshalData(data string) error {
+	var td taskData
+	if err := json.Unmarshal([]byte(data), &td); err != nil {
+		return errors.Wrap(err, "failed to unmarshal task data")
+	}
+	t.EpochId = td.EpochId
+	t.TssInfo = td.TssInfo
+	t.StartTime = time.Unix(td.StartTime, 0)
+	return nil
 }
 
 func (t Task) Execute(ctx context.Context) error {
@@ -57,9 +158,9 @@ func (t Task) Execute(ctx context.Context) error {
 	}
 
 	args := []string{
-		"reshare",
-		"--config", t.ConfigPath,
-		"--epoch", fmt.Sprintf("%d", t.EpochId),
+		"6",
+		//"reshare",
+		//"--config", t.ConfigPath,
 	}
 
 	cmd := exec.CommandContext(ctx, t.BinaryPath, args...)
@@ -70,32 +171,87 @@ func (t Task) Execute(ctx context.Context) error {
 		return errors.Wrap(err, "failed to execute resharing task")
 	}
 
-	if err := cmd.Wait(); err != nil {
-		return errors.Wrap(err, "resharing process did not complete successfully")
-	}
+	var (
+		epochId       uint32
+		bridgeAddress string
+		epoch         *bridgetypes.Epoch
+		blockTime     time.Time
+		err           error
+	)
 
-	var epoch uint32
-	var err error
-
-	retry.Do(
+	err = retry.Do(
 		func() error {
-			epoch, err = helpers.GetEpoch(ctx, t.Core)
+			epochId, err = helpers.GetEpoch(ctx, t.GRPCCore)
 			if err != nil {
 				return err
 			}
 
-			if epoch != t.EpochId {
+			if epochId != t.EpochId {
 				return errors.New("invalid epoch id")
 			}
 			return nil
 		},
 	)
+	if err != nil {
+		return errors.Wrap(err, "failed to wait updated epoch")
+	}
 
-	// Update config
-	// move new parties to parties
-	//
+	err = retry.Do(
+		func() error {
+			epoch, err = helpers.GetEpochState(ctx, epochId, t.GRPCCore)
+			return err
+		})
 
-	return nil
+	err = retry.Do(
+		func() error {
+			bridgeAddress, err = helpers.GetChainAddress(ctx, bridgetypes.ChainType_BITCOIN, t.GRPCCore)
+			return err
+		},
+	)
+
+	err = retry.Do(
+		func() error {
+			height := int64(epoch.FinalizedBlock)
+			block, err := t.HTTPCore.Block(ctx, &height)
+			if err != nil {
+				return err
+			}
+			blockTime = block.Block.Time
+			return nil
+		},
+	)
+	if err != nil {
+		return errors.Wrap(err, "failed to get blocktime ")
+	}
+
+	return errors.Wrap(t.updateConfigBeforeStart(epoch, blockTime.Add(time.Hour), bridgeAddress), "failed to update config before start")
+}
+
+func (t Task) updateConfigBeforeStart(epoch *bridgetypes.Epoch, startTime time.Time, bridgeAddress string) error {
+	configer := helpers.NewConfigManager(t.ConfigPath)
+	if err := configer.Load(); err != nil {
+		return errors.Wrap(err, "failed to load config")
+	}
+	if err := configer.SetEpoch(epoch.Id); err != nil {
+		return errors.Wrap(err, "failed to set epoch id")
+	}
+
+	if err := configer.UpdateBitcoinWallet(bridgeAddress, epoch.Id, "bitcoin"); err != nil {
+		return errors.Wrap(err, "failed to update bitcoin wallet")
+	}
+
+	newParties, err := configer.GetParties(helpers.NewPartiesKey)
+	if err != nil {
+		return errors.Wrap(err, "failed to get new parties")
+	}
+
+	configer.SetParties(helpers.NewPartiesKey, newParties)
+	err = configer.SetStartInfo(startTime, epoch.TssThreshold)
+	if err != nil {
+		return errors.Wrap(err, "failed to set start time")
+	}
+
+	return errors.Wrap(configer.Save(), "failed to save new parties")
 }
 
 // updatePartiesConfig updates the TSS config file based on TSSInfo:
@@ -139,11 +295,20 @@ func (t Task) updatePartiesConfig() error {
 	}
 
 	var updatedParties []types.Party
+	isMemeberOfNewParties := false
+
 	for _, p := range partyMap {
+		if p.CoreAddress == t.CoreAddress {
+			isMemeberOfNewParties = true
+		}
 		updatedParties = append(updatedParties, p)
 	}
 
-	configMgr.SetParties(helpers.PartiesKey, updatedParties)
+	if !isMemeberOfNewParties {
+		//NewParties must be set only for TSS that are members of a new epochs
+		return nil
+	}
+	configMgr.SetParties(helpers.NewPartiesKey, updatedParties)
 	if err = configMgr.Save(); err != nil {
 		return errors.Wrap(err, "failed to save config")
 	}
@@ -166,97 +331,4 @@ func (t Task) storeCertificate(domain, certificate string) (string, error) {
 	}
 
 	return certPath, nil
-}
-
-func (t Task) GetTime() time.Time {
-	return t.StartTime
-}
-
-func (t Task) Parse(attributes []types.Attribute) (types.Task, error) {
-	task := &Task{
-		BinaryPath:       t.BinaryPath,
-		ConfigPath:       t.ConfigPath,
-		CertificatesPath: t.CertificatesPath,
-	}
-
-	for _, attribute := range attributes {
-		switch attribute.Key {
-		case bridgeTypes.AttributeTssInfo:
-			if err := json.Unmarshal([]byte(attribute.Value), &task.TssInfo); err != nil {
-				return nil, errors.Wrap(err, "failed to unmarshal tss info")
-			}
-		case bridgeTypes.AttributeEpochId:
-			epoch, err := strconv.ParseUint(attribute.Value, 10, 32)
-			if err != nil {
-				return nil, errors.Wrap(err, "failed to parse epoch id")
-			}
-			task.EpochId = uint32(epoch)
-		case bridgeTypes.AttributeEpochStartTime:
-			startTime, err := strconv.ParseInt(attribute.Value, 10, 64)
-			if err != nil {
-				return nil, errors.Wrap(err, "failed to parse start time")
-			}
-			task.StartTime = time.Unix(startTime, 0)
-		default:
-			continue
-		}
-	}
-	return task, nil
-}
-
-func (t Task) StartScheduling(ctx context.Context, taskChan chan<- types.Task) {
-	delay := time.Until(t.StartTime)
-	if delay <= 0 {
-		taskChan <- &t
-		return
-	}
-	timer := time.NewTimer(delay)
-	defer timer.Stop()
-	select {
-	case <-ctx.Done():
-		return
-	case <-timer.C:
-		taskChan <- &t
-	}
-}
-
-func (t Task) Name() string {
-	return "AutoResharingTask"
-}
-
-func (t Task) GetID() int64 {
-	return t.id
-}
-
-func (t *Task) SetID(id int64) {
-	t.id = id
-}
-
-func (t Task) GetTaskType() string {
-	return TaskType
-}
-
-func (t Task) MarshalData() (string, error) {
-	data := taskData{
-		EpochId:   t.EpochId,
-		TssInfo:   t.TssInfo,
-		StartTime: t.StartTime.Unix(),
-	}
-	bytes, err := json.Marshal(data)
-	if err != nil {
-		return "", errors.Wrap(err, "failed to marshal task data")
-	}
-	return string(bytes), nil
-}
-
-// UnmarshalData deserializes the task data from JSON
-func (t *Task) UnmarshalData(data string) error {
-	var td taskData
-	if err := json.Unmarshal([]byte(data), &td); err != nil {
-		return errors.Wrap(err, "failed to unmarshal task data")
-	}
-	t.EpochId = td.EpochId
-	t.TssInfo = td.TssInfo
-	t.StartTime = time.Unix(td.StartTime, 0)
-	return nil
 }

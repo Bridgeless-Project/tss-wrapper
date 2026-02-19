@@ -5,22 +5,11 @@ CREATE TABLE epochs(
     end_time    timestamp   not null  -- update when new epoch started
 );
 
-CREATE TABLE party
-(
-    epoch_id    serial,
-    address     text,
-    certificate text,
-    domen       text,
-    FOREIGN KEY (epoch_id) REFERENCES epochs(id),
-    primary key (epoch_id, address)
-);
-
 CREATE TABLE IF NOT EXISTS latest_block
 (
     id INT NOT NULL UNIQUE,
     latest_block_id INT NOT NULL
 );
-
 
 CREATE TABLE IF NOT EXISTS tasks
 (

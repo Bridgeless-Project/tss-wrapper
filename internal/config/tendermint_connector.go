@@ -1,7 +1,6 @@
 package config
 
 import (
-	"crypto/tls"
 	"regexp"
 	"time"
 
@@ -11,7 +10,7 @@ import (
 	"gitlab.com/distributed_lab/kit/comfig"
 	"gitlab.com/distributed_lab/kit/kv"
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/credentials"
+	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"
 )
 
@@ -45,11 +44,13 @@ func (t *tenderminter) TendermintHttpClient() *http.HTTP {
 
 func (t *tenderminter) TendermintGrpcClient() *grpc.ClientConn {
 	cfg := t.config()
-	tlsConfig := &tls.Config{
-		InsecureSkipVerify: isHTTPS(cfg.GRPC),
-	}
+	// TODO: uncomment after tests
+	//tlsConfig := &tls.Config{
+	//	InsecureSkipVerify: false,
+	//	//InsecureSkipVerify: !isHTTPS(cfg.GRPC),
+	//}
 
-	con, err := grpc.Dial(cfg.RPC, grpc.WithTransportCredentials(credentials.NewTLS(tlsConfig)), grpc.WithKeepaliveParams(keepalive.ClientParameters{
+	con, err := grpc.Dial(cfg.GRPC, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithKeepaliveParams(keepalive.ClientParameters{
 		Time:    10 * time.Second,
 		Timeout: 20 * time.Second,
 	}))
