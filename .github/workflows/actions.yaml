@@ -19,10 +19,10 @@ jobs:
         with:
           fetch-depth: 0
           
-      - name: Set Docker API version
-        uses: docker/setup-docker-action@v4
-        with:
-          version: 20.10.1
+#      - name: Set Docker API version
+#        uses: docker/setup-docker-action@v4
+#        with:
+#          version: 29.2.1
 
       - name: Log in to registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $ --password-stdin
@@ -36,7 +36,7 @@ jobs:
             skaffold-
 
       - name: Run Skaffold pipeline as command
-        uses: hiberbee/github-action-skaffold@latest
+        uses: hiberbee/github-action-skaffold@1.26.0
         id: build
         with:
           filename: build/skaffold.yaml
