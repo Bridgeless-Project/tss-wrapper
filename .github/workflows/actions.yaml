@@ -32,7 +32,6 @@ jobs:
             -f Dockerfile \
             --layers \
             --cache-from $CACHE_REPO \
-            --cache-to $CACHE_REPO \
             -t $IMAGE \
             --build-arg CI_ACCESS_TOKEN=$CI_ACCESS_TOKEN \
             .
