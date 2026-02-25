@@ -29,9 +29,11 @@ jobs:
           CACHE_REPO: ${{ env.GITHUB_REPOSITORY }}/cache
         run: |
           buildah build \
+            --layers \
             -f build/Dockerfile \
             --layers \
             --cache-from $CACHE_REPO \
+            --cache-to $CACHE_REPO \
             -t $IMAGE \
             --build-arg CI_ACCESS_TOKEN=$CI_ACCESS_TOKEN \
             .
