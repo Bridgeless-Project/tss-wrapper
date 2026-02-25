@@ -1,6 +1,8 @@
 package pg
 
 import (
+	"database/sql"
+
 	db "github.com/Bridgeless-Project/tss-wrapper-svc/internal/data"
 	"github.com/Masterminds/squirrel"
 	"github.com/pkg/errors"
@@ -36,6 +38,9 @@ func (d *blocksQ) GetLatestBlock() (int64, error) {
 
 	var id int64
 	err := d.db.Get(&id, stmt)
+	if errors.Is(err, sql.ErrNoRows) {
+		return 0, nil
+	}
 
 	return id, errors.Wrap(err, "failed to fetch latest block")
 }
