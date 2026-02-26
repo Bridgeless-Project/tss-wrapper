@@ -1170,6 +1170,8 @@ github.com/99designs/keyring v1.2.1/go.mod h1:fc+wB5KTk9wQ9sDx0kFXB3A0MaeGHM9AwR
 github.com/Azure/azure-sdk-for-go/sdk/azcore v0.21.1/go.mod h1:fBF9PQNqB8scdgpZ3ufzaLntG0AG7C1WjPMsiFOmfHM=
 github.com/Azure/azure-sdk-for-go/sdk/internal v0.8.3/go.mod h1:KLF4gFr6DcKFZwSuH8w8yEK6DpFl3LP5rhdvAb7Yz5I=
 github.com/Azure/azure-sdk-for-go/sdk/storage/azblob v0.3.0/go.mod h1:tPaiy8S5bQ+S5sOiDlINkp7+Ef339+Nz5L5XO+cnOHo=
+github.com/Bridgeless-Project/bridgeless-core/v12 v12.1.8-0.20260225121736-0f3cbe36e356 h1:lRPa33k1iYEsE6ld6zQBXHehvSZO60fYlhIGZp2WSAA=
+github.com/Bridgeless-Project/bridgeless-core/v12 v12.1.8-0.20260225121736-0f3cbe36e356/go.mod h1:PP/1BmDyIFu9R0XDsE2m4E4ymyu6aeq639SX8R1ERCE=
 github.com/Bridgeless-Project/bridgeless-core/v12 v12.1.30-rc2 h1:Q1jEX2smjwhzCCJJnWF7pYlJ/ikAiRymVGnGZkXbnOE=
 github.com/Bridgeless-Project/bridgeless-core/v12 v12.1.30-rc2/go.mod h1:My5vfumrwPS8qLDVHDZV8jdsoFV8huUrmVHrOgWW1z4=
 github.com/Bridgeless-Project/cosmos-sdk v0.46.33 h1:577v3h/g5XRrwxannT88jEi16EYOxkJU1ApD+IhEzdM=

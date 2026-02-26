@@ -39,6 +39,7 @@ type Task struct {
 	BinaryPath       string
 	ConfigPath       string
 	CertificatesPath string
+	Threshold        uint32
 
 	GRPCCore grpc.ClientConn
 	HTTPCore *http.HTTP
@@ -100,6 +101,12 @@ func (t Task) Parse(attributes []types.Attribute) (types.Task, error) {
 				return nil, errors.Wrap(err, "failed to parse start time")
 			}
 			task.StartTime = time.Unix(startTime, 0)
+		case bridgetypes.AttributeTSSThreshold:
+			threshold, err := strconv.ParseUint(attribute.Value, 10, 32)
+			if err != nil {
+				return nil, errors.Wrap(err, "failed to parse threshold")
+			}
+			task.Threshold = uint32(threshold)
 		default:
 			continue
 		}
@@ -153,14 +160,16 @@ func (t Task) Execute(ctx context.Context) error {
 		return errors.New("binary path is not set")
 	}
 
-	if err := t.updatePartiesConfig(); err != nil {
+	if err := t.updateConfigBeforeResharing(); err != nil {
 		return errors.Wrap(err, "failed to update parties config")
 	}
 
 	args := []string{
-		"6",
-		//"reshare",
-		//"--config", t.ConfigPath,
+		"service",
+		"run",
+		"reshare",
+		"all",
+		"--config", t.ConfigPath,
 	}
 
 	cmd := exec.CommandContext(ctx, t.BinaryPath, args...)
@@ -224,28 +233,49 @@ func (t Task) Execute(ctx context.Context) error {
 		return errors.Wrap(err, "failed to get blocktime ")
 	}
 
-	return errors.Wrap(t.updateConfigBeforeStart(epoch, blockTime.Add(time.Hour), bridgeAddress), "failed to update config before start")
+	return errors.Wrap(t.updateConfigAfterResharing(epoch, blockTime.Add(time.Hour), bridgeAddress), "failed to update config before start")
 }
 
-func (t Task) updateConfigBeforeStart(epoch *bridgetypes.Epoch, startTime time.Time, bridgeAddress string) error {
+func (t Task) updateConfigBeforeResharing() error {
 	configer := helpers.NewConfigManager(t.ConfigPath)
 	if err := configer.Load(); err != nil {
 		return errors.Wrap(err, "failed to load config")
 	}
-	if err := configer.SetEpoch(epoch.Id); err != nil {
-		return errors.Wrap(err, "failed to set epoch id")
+
+	parties, err := configer.GetParties(helpers.PartiesKey)
+	if err != nil {
+		return errors.Wrap(err, "failed to get parties")
+	}
+
+	isNew, newParties, err := t.determinePartiesConfig(parties)
+	if err != nil {
+		return errors.Wrap(err, "failed to determine parties config")
+	}
+
+	err = configer.UpdateResharingParams(t.EpochId, t.StartTime, isNew, t.Threshold, newParties)
+	if err != nil {
+		return errors.Wrap(err, "failed to update parties config")
+	}
+
+	return nil
+}
+
+func (t Task) updateConfigAfterResharing(epoch *bridgetypes.Epoch, startTime time.Time, bridgeAddress string) error {
+	configer := helpers.NewConfigManager(t.ConfigPath)
+	if err := configer.Load(); err != nil {
+		return errors.Wrap(err, "failed to load config")
 	}
 
 	if err := configer.UpdateBitcoinWallet(bridgeAddress, epoch.Id, "bitcoin"); err != nil {
 		return errors.Wrap(err, "failed to update bitcoin wallet")
 	}
 
-	newParties, err := configer.GetParties(helpers.NewPartiesKey)
+	newParties, err := configer.GetParties(helpers.PartiesKey)
 	if err != nil {
 		return errors.Wrap(err, "failed to get new parties")
 	}
 
-	configer.SetParties(helpers.NewPartiesKey, newParties)
+	configer.SetParties(helpers.PartiesKey, newParties)
 	err = configer.SetStartInfo(startTime, epoch.TssThreshold)
 	if err != nil {
 		return errors.Wrap(err, "failed to set start time")
@@ -254,22 +284,15 @@ func (t Task) updateConfigBeforeStart(epoch *bridgetypes.Epoch, startTime time.T
 	return errors.Wrap(configer.Save(), "failed to save new parties")
 }
 
-// updatePartiesConfig updates the TSS config file based on TSSInfo:
 // - Active TSS: add to parties list and store certificate
 // - Inactive TSS: remove from parties list
-func (t Task) updatePartiesConfig() error {
-	configMgr := helpers.NewConfigManager(t.ConfigPath)
-	if err := configMgr.Load(); err != nil {
-		return errors.Wrap(err, "failed to load config")
-	}
-
-	currentParties, err := configMgr.GetParties(helpers.PartiesKey)
-	if err != nil {
-		return errors.Wrap(err, "failed to get current parties")
-	}
-
+func (t Task) determinePartiesConfig(currentParties []types.Party) (bool, []types.Party, error) {
 	partyMap := make(map[string]types.Party)
+	isNew := true
 	for _, p := range currentParties {
+		if p.CoreAddress == t.CoreAddress {
+			isNew = false
+		}
 		partyMap[p.CoreAddress] = p
 	}
 
@@ -277,7 +300,7 @@ func (t Task) updatePartiesConfig() error {
 		if tssInfo.Active {
 			certPath, err := t.storeCertificate(tssInfo.Domen, tssInfo.Certificate)
 			if err != nil {
-				return errors.Wrap(err, fmt.Sprintf("failed to store certificate for %s", tssInfo.Domen))
+				return false, nil, errors.Wrap(err, fmt.Sprintf("failed to store certificate for %s", tssInfo.Domen))
 			}
 
 			partyMap[tssInfo.Address] = types.Party{
@@ -300,20 +323,17 @@ func (t Task) updatePartiesConfig() error {
 	for _, p := range partyMap {
 		if p.CoreAddress == t.CoreAddress {
 			isMemeberOfNewParties = true
+			// DO NOT store its own address
+			continue
 		}
 		updatedParties = append(updatedParties, p)
 	}
 
 	if !isMemeberOfNewParties {
-		//NewParties must be set only for TSS that are members of a new epochs
-		return nil
-	}
-	configMgr.SetParties(helpers.NewPartiesKey, updatedParties)
-	if err = configMgr.Save(); err != nil {
-		return errors.Wrap(err, "failed to save config")
+		updatedParties = []types.Party{}
 	}
 
-	return nil
+	return isNew, updatedParties, nil
 }
 
 func (t Task) storeCertificate(domain, certificate string) (string, error) {

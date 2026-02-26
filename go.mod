@@ -3,7 +3,6 @@ module github.com/Bridgeless-Project/tss-wrapper-svc
 go 1.25.1
 
 require (
-	github.com/Bridgeless-Project/bridgeless-core/v12 v12.1.30-rc2
 	github.com/Masterminds/squirrel v1.5.4
 	github.com/avast/retry-go v3.0.0+incompatible
 	github.com/cosmos/gogoproto v1.5.0
@@ -25,6 +24,7 @@ require (
 	filippo.io/edwards25519 v1.1.0 // indirect
 	github.com/99designs/go-keychain v0.0.0-20191008050251-8e49817e8af4 // indirect
 	github.com/99designs/keyring v1.2.1 // indirect
+	github.com/Bridgeless-Project/bridgeless-core/v12 v12.1.8-0.20260225121736-0f3cbe36e356 // indirect
 	github.com/ChainSafe/go-schnorrkel v1.0.0 // indirect
 	github.com/Microsoft/go-winio v0.6.2 // indirect
 	github.com/OneOfOne/xxhash v1.2.8 // indirect

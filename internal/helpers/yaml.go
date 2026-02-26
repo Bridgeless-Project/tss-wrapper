@@ -10,15 +10,16 @@ import (
 )
 
 const (
-	PartiesKey    = "parties"
-	NewPartiesKey = "new_parties"
+	ResharingKey = "resharing_key"
+	PartiesKey   = "parties"
 )
+
 const (
 	chainsKey      = "chains"
 	listKey        = "list"
 	connectionsKey = "connections"
 	typeKey        = "type"
-	newKey         = "new"
+	newKey         = "new_participant"
 	epochKey       = "epoch"
 	tssKey         = "tss"
 	thresholdKey   = "threshold"
@@ -125,40 +126,28 @@ func (c *ConfigManager) SetParties(key string, parties []types.Party) {
 	partiesMap[listKey] = listRaw
 }
 
-// -------------------- EPOCH ---------------------
+// ----------------- RESHARING PARAMS ----------
 
-func (c *ConfigManager) GetEpoch() (uint32, error) {
-	partiesMap, ok := c.rawConfig[NewPartiesKey].(map[string]interface{})
+func (c *ConfigManager) UpdateResharingParams(epoch uint32, startTime time.Time, isNew bool, threshold uint32, parties []types.Party) error {
+	resharingParamsMap, ok := c.rawConfig[ResharingKey].(map[string]interface{})
 	if !ok {
-		return 0, errors.New("invalid parties format")
+		return errors.New("invalid resharing format")
 	}
 
-	epochRaw, ok := partiesMap[epochKey]
-	if !ok {
-		return 0, errors.New("invalid parties format")
+	var listRaw []interface{}
+	for _, p := range parties {
+		listRaw = append(listRaw, map[string]interface{}{
+			"connection":           p.Connection,
+			"core_address":         p.CoreAddress,
+			"tls_certificate_path": p.TLSCertificatePath,
+		})
 	}
 
-	return epochRaw.(uint32), nil
-}
-
-func (c *ConfigManager) SetEpoch(epoch uint32) error {
-	partiesMap, ok := c.rawConfig[NewPartiesKey].(map[string]interface{})
-	if !ok {
-		return errors.New("invalid parties format")
-	}
-
-	partiesMap[epochKey] = epoch
-
-	return nil
-}
-
-func (c *ConfigManager) SetNew(isNew bool) error {
-	partiesMap, ok := c.rawConfig[NewPartiesKey].(map[string]interface{})
-	if !ok {
-		return errors.New("invalid parties format")
-	}
-
-	partiesMap[newKey] = isNew
+	resharingParamsMap[epochKey] = epoch
+	resharingParamsMap[startTimeKey] = startTime
+	resharingParamsMap[newKey] = isNew
+	resharingParamsMap[thresholdKey] = threshold
+	resharingParamsMap[PartiesKey] = listRaw
 
 	return nil
 }
