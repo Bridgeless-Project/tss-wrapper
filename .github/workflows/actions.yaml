@@ -13,7 +13,7 @@ env:
 jobs:
   converge-github:
     name: Build To Github
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -21,7 +21,8 @@ jobs:
           fetch-depth: 0
 
       - name: Log in to registry
-        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $ --password-stdin
+        # This is where you will update the personal access token to GITHUB_TOKEN
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | buildah login ghcr.io -u $ --password-stdin
 
       - name: Build and Push Image
         env:
@@ -29,9 +30,10 @@ jobs:
           CACHE_REPO: ${{ env.GITHUB_REPOSITORY }}/cache
         run: |
           buildah build \
-            -f build/Dockerfile \
+            -f Dockerfile \
             --layers \
             --cache-from $CACHE_REPO \
+            --cache-to $CACHE_REPO \
             -t $IMAGE \
             --build-arg CI_ACCESS_TOKEN=$CI_ACCESS_TOKEN \
             .
