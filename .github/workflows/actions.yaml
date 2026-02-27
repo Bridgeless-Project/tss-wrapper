@@ -8,17 +8,17 @@ on:
 
 env:
   CI_ACCESS_TOKEN: ${{ secrets.CI_ACCESS_TOKEN }}
-  GITHUB_REPOSITORY: ghcr.io/bridgeless-project/tss-wrapper-svc
+  GITHUB_REPOSITORY: ghcr.io/bridgeless-project/tss-wrapper
 
 jobs:
   converge-github:
     name: Build To Github
-    runs-on: ubuntu-22.04
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          fetch-depth: 1
+          fetch-depth: 0
 
       - name: Log in to registry
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $ --password-stdin
@@ -32,6 +32,7 @@ jobs:
             -f build/Dockerfile \
             --layers \
             --cache-from $CACHE_REPO \
+            --cache-to $CACHE_REPO \
             -t $IMAGE \
             --build-arg CI_ACCESS_TOKEN=$CI_ACCESS_TOKEN \
             .
