@@ -10,21 +10,21 @@ import (
 )
 
 const (
-	ResharingKey = "resharing_key"
-	PartiesKey   = "parties"
+	ConfigSectionResharing = "resharing_params"
+	ConfigSectionParties   = "parties"
 )
 
 const (
-	chainsKey      = "chains"
-	listKey        = "list"
-	connectionsKey = "connections"
-	typeKey        = "type"
-	newKey         = "new_participant"
-	epochKey       = "epoch"
-	tssKey         = "tss"
-	thresholdKey   = "threshold"
-	sessionIdKey   = "session_id"
-	startTimeKey   = "start_time"
+	keyChains           = "chains"
+	keyPartiesList      = "list"
+	connectionsKey      = "connections"
+	keyChainType        = "type"
+	keyIsNewParticipant = "new_participant"
+	keyEpoch            = "epoch"
+	keyTss              = "tss"
+	keyThreshold        = "threshold"
+	sessionIdKey        = "session_id"
+	keyStartTime        = "start_time"
 )
 
 type ConfigManager struct {
@@ -75,7 +75,7 @@ func (c *ConfigManager) GetParties(key string) ([]types.Party, error) {
 		return nil, errors.New("invalid parties format")
 	}
 
-	listSlice, ok := partiesMap[listKey].([]interface{})
+	listSlice, ok := partiesMap[keyPartiesList].([]interface{})
 	if !ok {
 		return nil, errors.New("invalid parties list format")
 	}
@@ -123,13 +123,13 @@ func (c *ConfigManager) SetParties(key string, parties []types.Party) {
 		c.rawConfig[key] = partiesMap
 	}
 
-	partiesMap[listKey] = listRaw
+	partiesMap[keyPartiesList] = listRaw
 }
 
 // ----------------- RESHARING PARAMS ----------
 
 func (c *ConfigManager) UpdateResharingParams(epoch uint32, startTime time.Time, isNew bool, threshold uint32, parties []types.Party) error {
-	resharingParamsMap, ok := c.rawConfig[ResharingKey].(map[string]interface{})
+	resharingParamsMap, ok := c.rawConfig[ConfigSectionResharing].(map[string]interface{})
 	if !ok {
 		return errors.New("invalid resharing format")
 	}
@@ -143,23 +143,23 @@ func (c *ConfigManager) UpdateResharingParams(epoch uint32, startTime time.Time,
 		})
 	}
 
-	resharingParamsMap[epochKey] = epoch
-	resharingParamsMap[startTimeKey] = startTime
-	resharingParamsMap[newKey] = isNew
-	resharingParamsMap[thresholdKey] = threshold
-	resharingParamsMap[PartiesKey] = listRaw
+	resharingParamsMap[keyEpoch] = epoch
+	resharingParamsMap[keyStartTime] = startTime
+	resharingParamsMap[keyIsNewParticipant] = isNew
+	resharingParamsMap[keyThreshold] = threshold
+	resharingParamsMap[ConfigSectionParties] = listRaw
 
 	return nil
 }
 
 // -------------------CHAINS-------------------
 func (c *ConfigManager) UpdateBitcoinWallet(address string, epoch uint32, chainType string) error {
-	partiesMap, ok := c.rawConfig[chainsKey].(map[string]interface{})
+	partiesMap, ok := c.rawConfig[keyChains].(map[string]interface{})
 	if !ok {
 		return errors.New("invalid parties format")
 	}
 
-	listSlice, ok := partiesMap[listKey].([]interface{})
+	listSlice, ok := partiesMap[keyPartiesList].([]interface{})
 	if !ok {
 		return errors.New("invalid parties list format")
 	}
@@ -170,7 +170,7 @@ func (c *ConfigManager) UpdateBitcoinWallet(address string, epoch uint32, chainT
 			continue
 		}
 
-		if chainMap[typeKey] == chainType {
+		if chainMap[keyChainType] == chainType {
 			chainMap["address"] = address
 			chainMap["epoch"] = epoch
 		}
@@ -182,13 +182,13 @@ func (c *ConfigManager) UpdateBitcoinWallet(address string, epoch uint32, chainT
 // ------------------ START TIME ------------------
 
 func (c *ConfigManager) SetStartInfo(timestamp time.Time, threshold uint32) error {
-	tssMap, ok := c.rawConfig[tssKey].(map[string]interface{})
+	tssMap, ok := c.rawConfig[keyTss].(map[string]interface{})
 	if !ok {
 		return errors.New("invalid tss format")
 	}
 
-	tssMap[startTimeKey] = timestamp
-	tssMap[thresholdKey] = threshold
+	tssMap[keyStartTime] = timestamp
+	tssMap[keyThreshold] = threshold
 
 	return nil
 }

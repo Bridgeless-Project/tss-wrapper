@@ -242,7 +242,7 @@ func (t Task) updateConfigBeforeResharing() error {
 		return errors.Wrap(err, "failed to load config")
 	}
 
-	parties, err := configer.GetParties(helpers.PartiesKey)
+	parties, err := configer.GetParties(helpers.ConfigSectionParties)
 	if err != nil {
 		return errors.Wrap(err, "failed to get parties")
 	}
@@ -270,12 +270,12 @@ func (t Task) updateConfigAfterResharing(epoch *bridgetypes.Epoch, startTime tim
 		return errors.Wrap(err, "failed to update bitcoin wallet")
 	}
 
-	newParties, err := configer.GetParties(helpers.PartiesKey)
+	newParties, err := configer.GetParties(helpers.ConfigSectionParties)
 	if err != nil {
 		return errors.Wrap(err, "failed to get new parties")
 	}
 
-	configer.SetParties(helpers.PartiesKey, newParties)
+	configer.SetParties(helpers.ConfigSectionParties, newParties)
 	err = configer.SetStartInfo(startTime, epoch.TssThreshold)
 	if err != nil {
 		return errors.Wrap(err, "failed to set start time")
