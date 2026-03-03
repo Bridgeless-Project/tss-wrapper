@@ -257,6 +257,10 @@ func (t Task) updateConfigBeforeResharing() error {
 		return errors.Wrap(err, "failed to update parties config")
 	}
 
+	if err = configer.Save(); err != nil {
+		return errors.Wrap(err, "failed to save config")
+	}
+
 	return nil
 }
 

@@ -131,7 +131,8 @@ func (c *ConfigManager) SetParties(key string, parties []types.Party) {
 func (c *ConfigManager) UpdateResharingParams(epoch uint32, startTime time.Time, isNew bool, threshold uint32, parties []types.Party) error {
 	resharingParamsMap, ok := c.rawConfig[ConfigSectionResharing].(map[string]interface{})
 	if !ok {
-		return errors.New("invalid resharing format")
+		resharingParamsMap = make(map[string]interface{})
+		c.rawConfig[ConfigSectionResharing] = resharingParamsMap
 	}
 
 	var listRaw []interface{}
@@ -147,7 +148,9 @@ func (c *ConfigManager) UpdateResharingParams(epoch uint32, startTime time.Time,
 	resharingParamsMap[keyStartTime] = startTime
 	resharingParamsMap[keyIsNewParticipant] = isNew
 	resharingParamsMap[keyThreshold] = threshold
-	resharingParamsMap[ConfigSectionParties] = listRaw
+	resharingParamsMap[ConfigSectionParties] = map[string]interface{}{
+		keyPartiesList: listRaw,
+	}
 
 	return nil
 }
