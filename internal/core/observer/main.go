@@ -10,7 +10,6 @@ import (
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/helpers"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/types"
 	pbTypes "github.com/Bridgeless-Project/tss-wrapper-svc/resources/types"
-	"github.com/cosmos/gogoproto/grpc"
 	"github.com/pkg/errors"
 	abciTypes "github.com/tendermint/tendermint/abci/types"
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
@@ -32,7 +31,7 @@ type Observer struct {
 	tasksDb db.TasksQ
 }
 
-func New(client *http.HTTP, grpcClient grpc.ClientConn, updaterChan chan<- types.Task, logger *logan.Entry, blockDb db.BlocksQ, tasksDb db.TasksQ) *Observer {
+func New(client *http.HTTP, updaterChan chan<- types.Task, logger *logan.Entry, blockDb db.BlocksQ, tasksDb db.TasksQ) *Observer {
 	retrier := helpers.NewRetrier(logger, 5, 1*time.Second)
 
 	return &Observer{

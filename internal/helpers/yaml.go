@@ -10,7 +10,7 @@ import (
 )
 
 const (
-	ResharingKey = "resharing_key"
+	ResharingKey = "resharing"
 	PartiesKey   = "parties"
 )
 

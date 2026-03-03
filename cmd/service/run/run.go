@@ -57,11 +57,17 @@ func runService(ctx context.Context, cfg config.Config) error {
 	orchestratorTaskChan := make(chan types.Task)
 	schedulerTaskChan := make(chan types.Task)
 
-	orchestrator := core.NewOrchestrator(tssConfig.BinaryPath, orchestratorTaskChan, logger, tasksDb)
+	orchestrator := core.NewOrchestrator(
+		tssConfig.BinaryPath,
+		tssConfig.BinaryParams,
+		tssConfig.APIParams,
+		orchestratorTaskChan,
+		logger,
+		tasksDb,
+	)
 	taskScheduler := scheduler.New(schedulerTaskChan, orchestratorTaskChan, tasksDb, logger)
 	eventObserver := observer.New(
 		cfg.TendermintHttpClient(),
-		cfg.TendermintGrpcClient(),
 		schedulerTaskChan,
 		logger,
 		blocksDb,
