@@ -247,12 +247,12 @@ func (t Task) updateConfigBeforeResharing() error {
 		return errors.Wrap(err, "failed to get parties")
 	}
 
-	isNew, newParties, err := t.determinePartiesConfig(parties)
+	newParties, err := t.determinePartiesConfig(parties)
 	if err != nil {
 		return errors.Wrap(err, "failed to determine parties config")
 	}
 
-	err = configer.UpdateResharingParams(t.EpochId, t.StartTime, isNew, t.Threshold, newParties)
+	err = configer.UpdateResharingParams(t.EpochId, t.StartTime, t.isNewParty(), t.Threshold, newParties)
 	if err != nil {
 		return errors.Wrap(err, "failed to update parties config")
 	}
@@ -286,13 +286,9 @@ func (t Task) updateConfigAfterResharing(epoch *bridgetypes.Epoch, startTime tim
 
 // - Active TSS: add to parties list and store certificate
 // - Inactive TSS: remove from parties list
-func (t Task) determinePartiesConfig(currentParties []types.Party) (bool, []types.Party, error) {
+func (t Task) determinePartiesConfig(currentParties []types.Party) ([]types.Party, error) {
 	partyMap := make(map[string]types.Party)
-	isNew := true
 	for _, p := range currentParties {
-		if p.CoreAddress == t.CoreAddress {
-			isNew = false
-		}
 		partyMap[p.CoreAddress] = p
 	}
 
@@ -300,7 +296,7 @@ func (t Task) determinePartiesConfig(currentParties []types.Party) (bool, []type
 		if tssInfo.Active {
 			certPath, err := t.storeCertificate(tssInfo.Domen, tssInfo.Certificate)
 			if err != nil {
-				return false, nil, errors.Wrap(err, fmt.Sprintf("failed to store certificate for %s", tssInfo.Domen))
+				return nil, errors.Wrap(err, fmt.Sprintf("failed to store certificate for %s", tssInfo.Domen))
 			}
 
 			partyMap[tssInfo.Address] = types.Party{
@@ -333,7 +329,7 @@ func (t Task) determinePartiesConfig(currentParties []types.Party) (bool, []type
 		updatedParties = []types.Party{}
 	}
 
-	return isNew, updatedParties, nil
+	return updatedParties, nil
 }
 
 func (t Task) storeCertificate(domain, certificate string) (string, error) {
@@ -351,4 +347,14 @@ func (t Task) storeCertificate(domain, certificate string) (string, error) {
 	}
 
 	return certPath, nil
+}
+
+func (t Task) isNewParty() bool {
+	for _, info := range t.TssInfo {
+		if info.Address == t.CoreAddress {
+			return info.Active
+		}
+	}
+
+	return false
 }
