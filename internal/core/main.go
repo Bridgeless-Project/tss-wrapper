@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"strings"
+	"syscall"
 
 	db "github.com/Bridgeless-Project/tss-wrapper-svc/internal/data"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/types"
@@ -32,8 +33,8 @@ func New(binaryPath, binaryParams, apiParams string, taskChan <-chan types.Task,
 		taskChan:    taskChan,
 		logger:      logger.WithField("component", "orchestrator"),
 		tasksDb:     tasksDb,
-		defaultArgs: strings.Split(os.Getenv(binaryParams), ","),
-		apiParams:   strings.Split(apiParams, ","),
+		defaultArgs: strings.Split(binaryParams, " "),
+		apiParams:   strings.Split(apiParams, " "),
 	}
 }
 
@@ -42,7 +43,7 @@ func (o *Orchestrator) StartDefaultMode(ctx context.Context) error {
 	o.coreCmd.Stdout = os.Stdout
 	o.coreCmd.Stderr = os.Stderr
 
-	isApiNeeded := len(o.defaultArgs) > 0 && strings.TrimSpace(o.defaultArgs[0]) != ""
+	isApiNeeded := len(o.apiParams) > 0 && strings.TrimSpace(o.apiParams[0]) != ""
 
 	if isApiNeeded {
 		o.apiCmd = exec.CommandContext(ctx, o.binaryPath, o.apiParams...)
@@ -55,9 +56,6 @@ func (o *Orchestrator) StartDefaultMode(ctx context.Context) error {
 	if err := o.coreCmd.Start(); err != nil {
 		return errors.Wrap(err, "failed to start default mode")
 	}
-	if err := o.coreCmd.Wait(); err != nil {
-		return errors.Wrap(err, "default mode process exited with error")
-	}
 
 	o.logger.WithField("binary", o.binaryPath).Info("started default mode")
 	return nil
@@ -69,7 +67,7 @@ func (o *Orchestrator) Stop() error {
 		return nil
 	}
 
-	if err := o.coreCmd.Process.Kill(); err != nil {
+	if err := o.coreCmd.Process.Signal(syscall.SIGTERM); err != nil {
 		return errors.Wrap(err, "failed to kill process")
 	}
 
@@ -120,7 +118,7 @@ func (o *Orchestrator) Run(ctx context.Context) error {
 			}
 
 			if o.apiCmd != nil {
-				if err := o.apiCmd.Process.Kill(); err != nil {
+				if err := o.apiCmd.Process.Signal(syscall.SIGTERM); err != nil {
 					return errors.Wrap(err, "failed to kill api process")
 				}
 				// TODO: handle zombi process

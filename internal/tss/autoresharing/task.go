@@ -255,7 +255,7 @@ func (t Task) updateConfigBeforeResharing() error {
 		return errors.Wrap(err, "failed to load config")
 	}
 
-	parties, err := configer.GetParties(helpers.ResharingKey)
+	parties, err := configer.GetParties(helpers.PartiesKey)
 	if err != nil {
 		return errors.Wrap(err, "failed to get parties")
 	}
@@ -304,6 +304,7 @@ func (t Task) determinePartiesConfig(currentParties []types.Party) ([]types.Part
 	for _, p := range currentParties {
 		partyMap[p.CoreAddress] = p
 	}
+	isNewPartiesMember := true
 
 	for _, tssInfo := range t.TssInfo {
 		if tssInfo.Active {
@@ -318,23 +319,21 @@ func (t Task) determinePartiesConfig(currentParties []types.Party) ([]types.Part
 				TLSCertificatePath: certPath,
 			}
 			continue
-		}
+		} else {
+			if tssInfo.Address == t.CoreAddress {
+				isNewPartiesMember = false
+			}
 
-		if _, exists := partyMap[tssInfo.Address]; exists {
-			delete(partyMap, tssInfo.Address)
+			if _, exists := partyMap[tssInfo.Address]; exists {
+				delete(partyMap, tssInfo.Address)
+			}
 		}
 
 	}
 
 	var updatedParties []types.Party
-	isNewPartiesMember := false
 
 	for _, p := range partyMap {
-		if p.CoreAddress == t.CoreAddress {
-			isNewPartiesMember = true
-			// DO NOT store its own address
-			continue
-		}
 		updatedParties = append(updatedParties, p)
 	}
 
