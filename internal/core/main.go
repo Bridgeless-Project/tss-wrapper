@@ -26,12 +26,7 @@ type Orchestrator struct {
 	tasksDb  db.TasksQ
 }
 
-func NewOrchestrator(
-	binaryPath, binaryParams, apiParams string,
-	taskChan <-chan types.Task,
-	logger *logan.Entry,
-	tasksDb db.TasksQ,
-) *Orchestrator {
+func New(binaryPath, binaryParams, apiParams string, taskChan <-chan types.Task, logger *logan.Entry, tasksDb db.TasksQ) *Orchestrator {
 	return &Orchestrator{
 		binaryPath:  binaryPath,
 		taskChan:    taskChan,
@@ -60,6 +55,9 @@ func (o *Orchestrator) StartDefaultMode(ctx context.Context) error {
 	if err := o.coreCmd.Start(); err != nil {
 		return errors.Wrap(err, "failed to start default mode")
 	}
+	if err := o.coreCmd.Wait(); err != nil {
+		return errors.Wrap(err, "default mode process exited with error")
+	}
 
 	o.logger.WithField("binary", o.binaryPath).Info("started default mode")
 	return nil
@@ -73,6 +71,10 @@ func (o *Orchestrator) Stop() error {
 
 	if err := o.coreCmd.Process.Kill(); err != nil {
 		return errors.Wrap(err, "failed to kill process")
+	}
+
+	if err := o.coreCmd.Wait(); err != nil {
+		return errors.Wrap(err, "default mode killed process exited with error")
 	}
 
 	o.coreCmd = nil
@@ -121,6 +123,7 @@ func (o *Orchestrator) Run(ctx context.Context) error {
 				if err := o.apiCmd.Process.Kill(); err != nil {
 					return errors.Wrap(err, "failed to kill api process")
 				}
+				// TODO: handle zombi process
 			}
 
 			// Update task status to Completed

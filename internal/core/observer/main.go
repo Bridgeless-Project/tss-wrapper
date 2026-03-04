@@ -91,7 +91,10 @@ func (o *Observer) Run(ctx context.Context, startHeight int64) error {
 			}
 
 			if err = o.handleBlock(ctx, &startHeight); err != nil {
-				return errors.Wrap(err, fmt.Sprintf("failed to handle block %d", startHeight))
+				o.logger.WithError(err).
+					WithField("blockNumber", startHeight).
+					Error(fmt.Sprintf("failed to handle block %d", startHeight))
+				continue
 			}
 
 			if err = o.blockDb.UpdateLatestBlockId(db.LatestBlock{BlockId: startHeight}); err != nil {
