@@ -23,7 +23,7 @@ type Orchestrator struct {
 	tasksDb  db.TasksQ
 }
 
-func NewOrchestrator(binaryPath string, taskChan <-chan types.Task, logger *logan.Entry, tasksDb db.TasksQ) *Orchestrator {
+func New(binaryPath string, taskChan <-chan types.Task, logger *logan.Entry, tasksDb db.TasksQ) *Orchestrator {
 	return &Orchestrator{
 		binaryPath: binaryPath,
 		taskChan:   taskChan,
@@ -33,12 +33,15 @@ func NewOrchestrator(binaryPath string, taskChan <-chan types.Task, logger *loga
 }
 
 func (o *Orchestrator) StartDefaultMode(ctx context.Context) error {
-	o.cmd = exec.CommandContext(ctx, o.binaryPath, "-f", "/dev/null")
+	o.cmd = exec.CommandContext(ctx, o.binaryPath, o.defaultArgs...)
 	o.cmd.Stdout = os.Stdout
 	o.cmd.Stderr = os.Stderr
 
 	if err := o.cmd.Start(); err != nil {
 		return errors.Wrap(err, "failed to start default mode")
+	}
+	if err := o.cmd.Wait(); err != nil {
+		return errors.Wrap(err, "default mode process exited with error")
 	}
 
 	o.logger.WithField("binary", o.binaryPath).Info("started default mode")
@@ -53,6 +56,10 @@ func (o *Orchestrator) Stop() error {
 
 	if err := o.cmd.Process.Kill(); err != nil {
 		return errors.Wrap(err, "failed to kill process")
+	}
+
+	if err := o.cmd.Wait(); err != nil {
+		return errors.Wrap(err, "default mode killed process exited with error")
 	}
 
 	o.cmd = nil

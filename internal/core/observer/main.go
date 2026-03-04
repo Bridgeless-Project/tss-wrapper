@@ -10,7 +10,6 @@ import (
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/helpers"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/types"
 	pbTypes "github.com/Bridgeless-Project/tss-wrapper-svc/resources/types"
-	"github.com/cosmos/gogoproto/grpc"
 	"github.com/pkg/errors"
 	abciTypes "github.com/tendermint/tendermint/abci/types"
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
@@ -32,7 +31,7 @@ type Observer struct {
 	tasksDb db.TasksQ
 }
 
-func New(client *http.HTTP, grpcClient grpc.ClientConn, updaterChan chan<- types.Task, logger *logan.Entry, blockDb db.BlocksQ, tasksDb db.TasksQ) *Observer {
+func New(client *http.HTTP, updaterChan chan<- types.Task, logger *logan.Entry, blockDb db.BlocksQ, tasksDb db.TasksQ) *Observer {
 	retrier := helpers.NewRetrier(logger, 5, 1*time.Second)
 
 	return &Observer{
@@ -92,7 +91,10 @@ func (o *Observer) Run(ctx context.Context, startHeight int64) error {
 			}
 
 			if err = o.handleBlock(ctx, &startHeight); err != nil {
-				return errors.Wrap(err, fmt.Sprintf("failed to handle block %d", startHeight))
+				o.logger.WithError(err).
+					WithField("blockNumber", startHeight).
+					Error(fmt.Sprintf("failed to handle block %d", startHeight))
+				continue
 			}
 
 			if err = o.blockDb.UpdateLatestBlockId(db.LatestBlock{BlockId: startHeight}); err != nil {

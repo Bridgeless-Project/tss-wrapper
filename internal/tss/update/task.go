@@ -34,6 +34,7 @@ func NewTask() *Task {
 }
 
 func (t Task) Execute(ctx context.Context) error {
+	// TODO: unmock the file path
 	if err := t.downloadBinary(t.Link, ""); err != nil {
 		return errors.Wrap(err, "failed to download TSS binary")
 	}

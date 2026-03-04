@@ -28,7 +28,6 @@ CREATE INDEX idx_tasks_created_at ON tasks(created_at);
 -- +migrate Down
 DROP TABLE IF EXISTS tasks;
 DROP TABLE IF EXISTS latest_block;
-DROP TABLE IF EXISTS party;
 DROP TABLE IF EXISTS epochs;
 
 DROP INDEX IF EXISTS idx_tasks_status;

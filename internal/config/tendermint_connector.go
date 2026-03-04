@@ -1,7 +1,7 @@
 package config
 
 import (
-	"regexp"
+	"strings"
 	"time"
 
 	"github.com/pkg/errors"
@@ -84,10 +84,5 @@ func (t *tenderminter) config() *tenderminterCfg {
 }
 
 func isHTTPS(domen string) bool {
-	ok, err := regexp.Match("https:", []byte(domen))
-	if err != nil || !ok {
-		return false
-	}
-
-	return true
+	return strings.HasPrefix(domen, "https:")
 }

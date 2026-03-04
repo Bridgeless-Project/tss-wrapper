@@ -12,8 +12,8 @@ import (
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/core/observer"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/core/scheduler"
 	db "github.com/Bridgeless-Project/tss-wrapper-svc/internal/data"
-	pg "github.com/Bridgeless-Project/tss-wrapper-svc/internal/data/postgress"
-	autoresharing "github.com/Bridgeless-Project/tss-wrapper-svc/internal/tss/autoreshering"
+	pg "github.com/Bridgeless-Project/tss-wrapper-svc/internal/data/postgres"
+	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/tss/autoresharing"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/tss/update"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/types"
 	pbTypes "github.com/Bridgeless-Project/tss-wrapper-svc/resources/types"
@@ -54,14 +54,13 @@ func runService(ctx context.Context, cfg config.Config) error {
 	blocksDb := pg.NewBlocksQ(cfg.DB())
 	tasksDb := pg.NewTasksQ(cfg.DB())
 
-	orchestratorTaskChan := make(chan types.Task)
-	schedulerTaskChan := make(chan types.Task)
+	orchestratorTaskChan := make(chan types.Task, 100)
+	schedulerTaskChan := make(chan types.Task, 100)
 
-	orchestrator := core.NewOrchestrator(tssConfig.BinaryPath, orchestratorTaskChan, logger, tasksDb)
+	orchestrator := core.New(tssConfig.BinaryPath, orchestratorTaskChan, logger, tasksDb)
 	taskScheduler := scheduler.New(schedulerTaskChan, orchestratorTaskChan, tasksDb, logger)
 	eventObserver := observer.New(
 		cfg.TendermintHttpClient(),
-		cfg.TendermintGrpcClient(),
 		schedulerTaskChan,
 		logger,
 		blocksDb,

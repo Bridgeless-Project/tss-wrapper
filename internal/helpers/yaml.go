@@ -17,13 +17,11 @@ const (
 const (
 	keyChains           = "chains"
 	keyPartiesList      = "list"
-	connectionsKey      = "connections"
 	keyChainType        = "type"
 	keyIsNewParticipant = "new_participant"
 	keyEpoch            = "epoch"
 	keyTss              = "tss"
 	keyThreshold        = "threshold"
-	sessionIdKey        = "session_id"
 	keyStartTime        = "start_time"
 )
 
@@ -159,7 +157,7 @@ func (c *ConfigManager) UpdateResharingParams(epoch uint32, startTime time.Time,
 func (c *ConfigManager) UpdateBitcoinWallet(address string, epoch uint32, chainType string) error {
 	partiesMap, ok := c.rawConfig[keyChains].(map[string]interface{})
 	if !ok {
-		return errors.New("invalid parties format")
+		return errors.New("invalid chains format")
 	}
 
 	listSlice, ok := partiesMap[keyPartiesList].([]interface{})
