@@ -10,20 +10,18 @@ import (
 )
 
 const (
-	ConfigSectionResharing = "resharing_params"
-	ConfigSectionParties   = "parties"
+	ResharingKey = "resharing"
+	PartiesKey   = "parties"
 )
 
 const (
 	keyChains           = "chains"
 	keyPartiesList      = "list"
-	connectionsKey      = "connections"
 	keyChainType        = "type"
 	keyIsNewParticipant = "new_participant"
 	keyEpoch            = "epoch"
 	keyTss              = "tss"
 	keyThreshold        = "threshold"
-	sessionIdKey        = "session_id"
 	keyStartTime        = "start_time"
 )
 
@@ -129,10 +127,10 @@ func (c *ConfigManager) SetParties(key string, parties []types.Party) {
 // ----------------- RESHARING PARAMS ----------
 
 func (c *ConfigManager) UpdateResharingParams(epoch uint32, startTime time.Time, isNew bool, threshold uint32, parties []types.Party) error {
-	resharingParamsMap, ok := c.rawConfig[ConfigSectionResharing].(map[string]interface{})
+	resharingParamsMap, ok := c.rawConfig[ResharingKey].(map[string]interface{})
 	if !ok {
 		resharingParamsMap = make(map[string]interface{})
-		c.rawConfig[ConfigSectionResharing] = resharingParamsMap
+		c.rawConfig[ResharingKey] = resharingParamsMap
 	}
 
 	var listRaw []interface{}
@@ -148,7 +146,7 @@ func (c *ConfigManager) UpdateResharingParams(epoch uint32, startTime time.Time,
 	resharingParamsMap[keyStartTime] = startTime
 	resharingParamsMap[keyIsNewParticipant] = isNew
 	resharingParamsMap[keyThreshold] = threshold
-	resharingParamsMap[ConfigSectionParties] = map[string]interface{}{
+	resharingParamsMap[PartiesKey] = map[string]interface{}{
 		keyPartiesList: listRaw,
 	}
 
@@ -159,7 +157,7 @@ func (c *ConfigManager) UpdateResharingParams(epoch uint32, startTime time.Time,
 func (c *ConfigManager) UpdateBitcoinWallet(address string, epoch uint32, chainType string) error {
 	partiesMap, ok := c.rawConfig[keyChains].(map[string]interface{})
 	if !ok {
-		return errors.New("invalid parties format")
+		return errors.New("invalid chains format")
 	}
 
 	listSlice, ok := partiesMap[keyPartiesList].([]interface{})

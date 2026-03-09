@@ -27,6 +27,7 @@ type taskData struct {
 	EpochId   uint32                `json:"epoch_id"`
 	TssInfo   []bridgetypes.TSSInfo `json:"tss_info"`
 	StartTime int64                 `json:"start_time"`
+	Threshold uint32
 }
 
 type Task struct {
@@ -34,12 +35,12 @@ type Task struct {
 	EpochId     uint32
 	TssInfo     []bridgetypes.TSSInfo
 	CoreAddress string
+	Threshold   uint32
+	StartTime   time.Time
 
-	StartTime        time.Time
 	BinaryPath       string
 	ConfigPath       string
 	CertificatesPath string
-	Threshold        uint32
 
 	GRPCCore grpc.ClientConn
 	HTTPCore *http.HTTP
@@ -81,6 +82,11 @@ func (t Task) Parse(attributes []types.Attribute) (types.Task, error) {
 		BinaryPath:       t.BinaryPath,
 		ConfigPath:       t.ConfigPath,
 		CertificatesPath: t.CertificatesPath,
+
+		CoreAddress: t.CoreAddress,
+
+		HTTPCore: t.HTTPCore,
+		GRPCCore: t.GRPCCore,
 	}
 
 	for _, attribute := range attributes {
@@ -211,12 +217,19 @@ func (t Task) Execute(ctx context.Context) error {
 			return err
 		})
 
+	if err != nil {
+		return errors.Wrap(err, "failed to get epoch state")
+	}
+
 	err = retry.Do(
 		func() error {
 			bridgeAddress, err = helpers.GetChainAddress(ctx, bridgetypes.ChainType_BITCOIN, t.GRPCCore)
 			return err
 		},
 	)
+	if err != nil {
+		return errors.Wrap(err, "failed to get bitcoin bridge address")
+	}
 
 	err = retry.Do(
 		func() error {
@@ -233,7 +246,7 @@ func (t Task) Execute(ctx context.Context) error {
 		return errors.Wrap(err, "failed to get blocktime ")
 	}
 
-	return errors.Wrap(t.updateConfigAfterResharing(epoch, blockTime.Add(time.Hour), bridgeAddress), "failed to update config before start")
+	return errors.Wrap(t.updateConfigAfterResharing(epoch, blockTime.Add(time.Hour), bridgeAddress), "failed to update config after start")
 }
 
 func (t Task) updateConfigBeforeResharing() error {
@@ -242,7 +255,7 @@ func (t Task) updateConfigBeforeResharing() error {
 		return errors.Wrap(err, "failed to load config")
 	}
 
-	parties, err := configer.GetParties(helpers.ConfigSectionParties)
+	parties, err := configer.GetParties(helpers.PartiesKey)
 	if err != nil {
 		return errors.Wrap(err, "failed to get parties")
 	}
@@ -257,11 +270,7 @@ func (t Task) updateConfigBeforeResharing() error {
 		return errors.Wrap(err, "failed to update parties config")
 	}
 
-	if err = configer.Save(); err != nil {
-		return errors.Wrap(err, "failed to save config")
-	}
-
-	return nil
+	return errors.Wrap(configer.Save(), "failed to save config")
 }
 
 func (t Task) updateConfigAfterResharing(epoch *bridgetypes.Epoch, startTime time.Time, bridgeAddress string) error {
@@ -274,12 +283,12 @@ func (t Task) updateConfigAfterResharing(epoch *bridgetypes.Epoch, startTime tim
 		return errors.Wrap(err, "failed to update bitcoin wallet")
 	}
 
-	newParties, err := configer.GetParties(helpers.ConfigSectionParties)
+	newParties, err := configer.GetParties(helpers.PartiesKey)
 	if err != nil {
 		return errors.Wrap(err, "failed to get new parties")
 	}
 
-	configer.SetParties(helpers.ConfigSectionParties, newParties)
+	configer.SetParties(helpers.PartiesKey, newParties)
 	err = configer.SetStartInfo(startTime, epoch.TssThreshold)
 	if err != nil {
 		return errors.Wrap(err, "failed to set start time")
@@ -295,6 +304,7 @@ func (t Task) determinePartiesConfig(currentParties []types.Party) ([]types.Part
 	for _, p := range currentParties {
 		partyMap[p.CoreAddress] = p
 	}
+	isNewPartiesMember := true
 
 	for _, tssInfo := range t.TssInfo {
 		if tssInfo.Active {
@@ -309,27 +319,25 @@ func (t Task) determinePartiesConfig(currentParties []types.Party) ([]types.Part
 				TLSCertificatePath: certPath,
 			}
 			continue
-		}
+		} else {
+			if tssInfo.Address == t.CoreAddress {
+				isNewPartiesMember = false
+			}
 
-		if _, exists := partyMap[tssInfo.Address]; exists {
-			delete(partyMap, tssInfo.Address)
+			if _, exists := partyMap[tssInfo.Address]; exists {
+				delete(partyMap, tssInfo.Address)
+			}
 		}
 
 	}
 
 	var updatedParties []types.Party
-	isMemeberOfNewParties := false
 
 	for _, p := range partyMap {
-		if p.CoreAddress == t.CoreAddress {
-			isMemeberOfNewParties = true
-			// DO NOT store its own address
-			continue
-		}
 		updatedParties = append(updatedParties, p)
 	}
 
-	if !isMemeberOfNewParties {
+	if !isNewPartiesMember {
 		updatedParties = []types.Party{}
 	}
 

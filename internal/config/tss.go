@@ -20,6 +20,8 @@ type TSSConfig struct {
 	ConfigPath       string `fig:"config_path,required"`
 	CertificatesPath string `fig:"certificates_path,required"`
 	CoreAddress      string `fig:"core_address,required"` // the cosmos address of the TSS
+	BinaryParams     string `fig:"binary_params,required"`
+	APIParams        string `fig:"api_params"`
 }
 
 type tssConfiger struct {

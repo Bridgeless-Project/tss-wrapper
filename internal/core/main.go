@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"strings"
+	"syscall"
 
 	db "github.com/Bridgeless-Project/tss-wrapper-svc/internal/data"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/types"
@@ -16,28 +18,42 @@ import (
 type Orchestrator struct {
 	binaryPath  string
 	defaultArgs []string
+	apiParams   []string
 	logger      *logan.Entry
 
-	cmd      *exec.Cmd
+	coreCmd  *exec.Cmd
+	apiCmd   *exec.Cmd
 	taskChan <-chan types.Task
 	tasksDb  db.TasksQ
 }
 
-func NewOrchestrator(binaryPath string, taskChan <-chan types.Task, logger *logan.Entry, tasksDb db.TasksQ) *Orchestrator {
+func New(binaryPath, binaryParams, apiParams string, taskChan <-chan types.Task, logger *logan.Entry, tasksDb db.TasksQ) *Orchestrator {
 	return &Orchestrator{
-		binaryPath: binaryPath,
-		taskChan:   taskChan,
-		logger:     logger.WithField("component", "orchestrator"),
-		tasksDb:    tasksDb,
+		binaryPath:  binaryPath,
+		taskChan:    taskChan,
+		logger:      logger.WithField("component", "orchestrator"),
+		tasksDb:     tasksDb,
+		defaultArgs: strings.Split(binaryParams, " "),
+		apiParams:   strings.Split(apiParams, " "),
 	}
 }
 
 func (o *Orchestrator) StartDefaultMode(ctx context.Context) error {
-	o.cmd = exec.CommandContext(ctx, o.binaryPath, "-f", "/dev/null")
-	o.cmd.Stdout = os.Stdout
-	o.cmd.Stderr = os.Stderr
+	o.coreCmd = exec.CommandContext(ctx, o.binaryPath, o.defaultArgs...)
+	o.coreCmd.Stdout = os.Stdout
+	o.coreCmd.Stderr = os.Stderr
 
-	if err := o.cmd.Start(); err != nil {
+	isApiNeeded := len(o.apiParams) > 0 && strings.TrimSpace(o.apiParams[0]) != ""
+
+	if isApiNeeded {
+		o.apiCmd = exec.CommandContext(ctx, o.binaryPath, o.apiParams...)
+		if err := o.apiCmd.Start(); err != nil {
+			return errors.Wrap(err, "failed to start api")
+		}
+		o.logger.WithField("binary", o.binaryPath).Info("started api mode")
+	}
+
+	if err := o.coreCmd.Start(); err != nil {
 		return errors.Wrap(err, "failed to start default mode")
 	}
 
@@ -46,16 +62,20 @@ func (o *Orchestrator) StartDefaultMode(ctx context.Context) error {
 }
 
 func (o *Orchestrator) Stop() error {
-	if o.cmd == nil || o.cmd.Process == nil {
+	if o.coreCmd == nil || o.coreCmd.Process == nil {
 		o.logger.Warn("no process to stop")
 		return nil
 	}
 
-	if err := o.cmd.Process.Kill(); err != nil {
+	if err := o.coreCmd.Process.Signal(syscall.SIGTERM); err != nil {
 		return errors.Wrap(err, "failed to kill process")
 	}
 
-	o.cmd = nil
+	if err := o.coreCmd.Wait(); err != nil {
+		return errors.Wrap(err, "default mode killed process exited with error")
+	}
+
+	o.coreCmd = nil
 	return nil
 }
 
@@ -95,6 +115,13 @@ func (o *Orchestrator) Run(ctx context.Context) error {
 					return errors.Wrap(startErr, "failed to restart default mode after task failure")
 				}
 				continue
+			}
+
+			if o.apiCmd != nil {
+				if err := o.apiCmd.Process.Signal(syscall.SIGTERM); err != nil {
+					return errors.Wrap(err, "failed to kill api process")
+				}
+				// TODO: handle zombi process
 			}
 
 			// Update task status to Completed
