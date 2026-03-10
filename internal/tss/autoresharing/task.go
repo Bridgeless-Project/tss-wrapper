@@ -166,9 +166,11 @@ func (t Task) Execute(ctx context.Context) error {
 		return errors.New("binary path is not set")
 	}
 
+	fmt.Println("Update resharing params")
 	if err := t.updateConfigBeforeResharing(); err != nil {
 		return errors.Wrap(err, "failed to update parties config")
 	}
+	fmt.Println("Start resharing")
 
 	args := []string{
 		"service",
@@ -265,7 +267,7 @@ func (t Task) updateConfigBeforeResharing() error {
 		return errors.Wrap(err, "failed to determine parties config")
 	}
 
-	err = configer.UpdateResharingParams(t.EpochId, t.StartTime, t.isNewParty(), t.Threshold, newParties)
+	err = configer.UpdateResharingParams(t.EpochId, t.StartTime.Add(10*time.Second), t.isNewParty(), t.Threshold, newParties)
 	if err != nil {
 		return errors.Wrap(err, "failed to update parties config")
 	}

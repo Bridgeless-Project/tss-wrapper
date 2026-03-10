@@ -101,12 +101,13 @@ func (o *Orchestrator) Run(ctx context.Context) error {
 				Info("executing task")
 
 			if err := o.Stop(); err != nil {
-
+				o.logger.WithError(err).Warn("failed to stop process before executing task")
 				// TODO: handle it
 				//o.updateTaskFailed(taskID, err)
 				//return errors.Wrap(err, "failed to stop process")
 			}
 
+			o.logger.WithField("task_id", taskID).Info("stopped process before executing task")
 			if err := task.Execute(ctx); err != nil {
 				o.updateTaskFailed(taskID, err)
 				o.logger.WithError(err).
