@@ -101,8 +101,10 @@ func (o *Orchestrator) Run(ctx context.Context) error {
 				Info("executing task")
 
 			if err := o.Stop(); err != nil {
-				o.updateTaskFailed(taskID, err)
-				return errors.Wrap(err, "failed to stop process")
+
+				// TODO: handle it
+				//o.updateTaskFailed(taskID, err)
+				//return errors.Wrap(err, "failed to stop process")
 			}
 
 			if err := task.Execute(ctx); err != nil {
