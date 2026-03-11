@@ -310,6 +310,9 @@ func (t Task) determinePartiesConfig(currentParties []types.Party) ([]types.Part
 
 	for _, tssInfo := range t.TssInfo {
 		if tssInfo.Active {
+			if tssInfo.Address == t.CoreAddress {
+				continue
+			}
 			certPath, err := t.storeCertificate(tssInfo.Domen, tssInfo.Certificate)
 			if err != nil {
 				return nil, errors.Wrap(err, fmt.Sprintf("failed to store certificate for %s", tssInfo.Domen))
