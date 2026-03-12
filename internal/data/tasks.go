@@ -21,5 +21,7 @@ type TasksQ interface {
 	Insert(record TaskRecord) (int64, error)
 	UpdateStatus(id int64, status types.ProcessStatus) error
 	UpdateStatusWithError(id int64, status types.ProcessStatus, errMsg string) error
+	FilterByStatus(status types.ProcessStatus) TasksQ
+	Get() ([]TaskRecord, error)
 	GetIncomplete() ([]TaskRecord, error) //status != COMPLETED and status != FAILED
 }
