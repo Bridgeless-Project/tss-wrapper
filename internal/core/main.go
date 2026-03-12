@@ -108,27 +108,33 @@ func (o *Orchestrator) Run(ctx context.Context) error {
 			}
 
 			o.logger.WithField("task_id", taskID).Info("stopped process before executing task")
-			if err := task.Execute(ctx); err != nil {
+			startDefaultMode, err := task.Execute(ctx)
+			if err != nil {
 				o.updateTaskFailed(taskID, err)
 				o.logger.WithError(err).
 					WithField("task_id", taskID).
 					Error("task execution failed")
+
 				// Continue running, start default mode again
-				if startErr := o.StartDefaultMode(ctx); startErr != nil {
-					return errors.Wrap(startErr, "failed to restart default mode after task failure")
+				if startDefaultMode {
+					if err = o.StartDefaultMode(ctx); err != nil {
+						return errors.Wrap(err, "failed to restart default mode after task failure")
+					}
+					continue
 				}
+
 				continue
 			}
 
 			if o.apiCmd != nil {
-				if err := o.apiCmd.Process.Signal(syscall.SIGTERM); err != nil {
+				if err = o.apiCmd.Process.Signal(syscall.SIGTERM); err != nil {
 					return errors.Wrap(err, "failed to kill api process")
 				}
 				// TODO: handle zombi process
 			}
 
 			// Update task status to Completed
-			if err := o.tasksDb.UpdateStatus(taskID, pbTypes.ProcessStatus_PROCESS_STATUS_COMPLETED); err != nil {
+			if err = o.tasksDb.UpdateStatus(taskID, pbTypes.ProcessStatus_PROCESS_STATUS_COMPLETED); err != nil {
 				o.logger.WithError(err).
 					WithField("task_id", taskID).
 					Error("failed to update task status to completed")
@@ -136,7 +142,11 @@ func (o *Orchestrator) Run(ctx context.Context) error {
 
 			o.logger.WithField("task_id", taskID).Info("task completed successfully")
 
-			if err := o.StartDefaultMode(ctx); err != nil {
+			if !startDefaultMode {
+				return nil
+			}
+
+			if err = o.StartDefaultMode(ctx); err != nil {
 				return errors.Wrap(err, "failed to restart default mode after task")
 			}
 		}

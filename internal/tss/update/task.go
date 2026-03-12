@@ -33,12 +33,12 @@ func NewTask() *Task {
 	return &Task{}
 }
 
-func (t Task) Execute(ctx context.Context) error {
+func (t Task) Execute(ctx context.Context) (bool, error) {
 	// TODO: unmock the file path
 	if err := t.downloadBinary(t.Link, ""); err != nil {
-		return errors.Wrap(err, "failed to download TSS binary")
+		return false, errors.Wrap(err, "failed to download TSS binary")
 	}
-	return nil
+	return true, nil
 }
 
 func (t Task) GetTime() time.Time {

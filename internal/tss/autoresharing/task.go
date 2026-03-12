@@ -161,14 +161,15 @@ func (t *Task) UnmarshalData(data string) error {
 	return nil
 }
 
-func (t Task) Execute(ctx context.Context) error {
+func (t Task) Execute(ctx context.Context) (bool, error) {
+	isRevoked := t.isRevokedParty()
 	if t.BinaryPath == "" {
-		return errors.New("binary path is not set")
+		return !isRevoked, errors.New("binary path is not set")
 	}
 
 	fmt.Println("Update resharing params")
 	if err := t.updateConfigBeforeResharing(); err != nil {
-		return errors.Wrap(err, "failed to update parties config")
+		return !isRevoked, errors.Wrap(err, "failed to update parties config")
 	}
 	fmt.Println("Start resharing")
 
@@ -185,13 +186,13 @@ func (t Task) Execute(ctx context.Context) error {
 	cmd.Stderr = os.Stderr
 
 	if err := cmd.Run(); err != nil {
-		return errors.Wrap(err, "failed to execute resharing task")
+		return !isRevoked, errors.Wrap(err, "failed to execute resharing task")
 	}
 	opt := make([]retry.Option, 0)
 	if t.isNewParty() {
 		opt = append(opt,
-			retry.Delay(3*time.Minute),
-			retry.Attempts(30),
+			retry.Delay(1*time.Minute),
+			retry.Attempts(120),
 		)
 	}
 	var (
@@ -217,7 +218,7 @@ func (t Task) Execute(ctx context.Context) error {
 		opt...,
 	)
 	if err != nil {
-		return errors.Wrap(err, "failed to wait updated epoch")
+		return !isRevoked, errors.Wrap(err, "failed to wait updated epoch")
 	}
 
 	err = retry.Do(
@@ -229,7 +230,7 @@ func (t Task) Execute(ctx context.Context) error {
 	)
 
 	if err != nil {
-		return errors.Wrap(err, "failed to get epoch state")
+		return !isRevoked, errors.Wrap(err, "failed to get epoch state")
 	}
 
 	err = retry.Do(
@@ -240,7 +241,7 @@ func (t Task) Execute(ctx context.Context) error {
 		opt...,
 	)
 	if err != nil {
-		return errors.Wrap(err, "failed to get bitcoin bridge address")
+		return !isRevoked, errors.Wrap(err, "failed to get bitcoin bridge address")
 	}
 
 	err = retry.Do(
@@ -256,10 +257,10 @@ func (t Task) Execute(ctx context.Context) error {
 		opt...,
 	)
 	if err != nil {
-		return errors.Wrap(err, "failed to get blocktime ")
+		return !isRevoked, errors.Wrap(err, "failed to get blocktime ")
 	}
 
-	return errors.Wrap(t.updateConfigAfterResharing(epoch, blockTime.Add(time.Hour), bridgeAddress), "failed to update config after start")
+	return !isRevoked, errors.Wrap(t.updateConfigAfterResharing(epoch, blockTime.Add(10*time.Minute), bridgeAddress), "failed to update config after start")
 }
 
 func (t Task) updateConfigBeforeResharing() error {
@@ -292,11 +293,12 @@ func (t Task) updateConfigAfterResharing(epoch *bridgetypes.Epoch, startTime tim
 		return errors.Wrap(err, "failed to load config")
 	}
 
-	if err := configer.UpdateBitcoinWallet(bridgeAddress, epoch.Id, "bitcoin"); err != nil {
+	// use map
+	if err := configer.UpdateBitcoinWallet(bridgeAddress, epoch.Id, "1"); err != nil {
 		return errors.Wrap(err, "failed to update bitcoin wallet")
 	}
 
-	newParties, err := configer.GetParties(helpers.PartiesKey)
+	newParties, err := configer.GetResharingParties()
 	if err != nil {
 		return errors.Wrap(err, "failed to get new parties")
 	}
@@ -384,5 +386,14 @@ func (t Task) isNewParty() bool {
 		}
 	}
 
+	return false
+}
+
+func (t Task) isRevokedParty() bool {
+	for _, info := range t.TssInfo {
+		if info.Address == t.CoreAddress {
+			return !info.Active
+		}
+	}
 	return false
 }
