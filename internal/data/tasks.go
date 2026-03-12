@@ -1,6 +1,7 @@
 package db
 
 import (
+	"gitlab.com/distributed_lab/kit/pgdb"
 	"time"
 
 	"github.com/Bridgeless-Project/tss-wrapper-svc/resources/types"
@@ -21,6 +22,7 @@ type TasksQ interface {
 	Insert(record TaskRecord) (int64, error)
 	UpdateStatus(id int64, status types.ProcessStatus) error
 	UpdateStatusWithError(id int64, status types.ProcessStatus, errMsg string) error
+	Page(pageParams pgdb.OffsetPageParams) TasksQ
 	FilterByStatus(status types.ProcessStatus) TasksQ
 	Get() ([]TaskRecord, error)
 	GetIncomplete() ([]TaskRecord, error) //status != COMPLETED and status != FAILED

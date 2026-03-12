@@ -77,6 +77,11 @@ func (q *tasksQ) UpdateStatusWithError(id int64, status types.ProcessStatus, err
 	return errors.Wrap(err, "failed to update task status with error")
 }
 
+func (q *tasksQ) Page(pageParams pgdb.OffsetPageParams) db.TasksQ {
+	q.selector = pageParams.ApplyTo(q.selector, "id")
+	return q
+}
+
 func (q *tasksQ) FilterByStatus(status types.ProcessStatus) db.TasksQ {
 	q.selector = q.selector.Where(squirrel.Eq{taskStatusField: int32(status)})
 	return q
