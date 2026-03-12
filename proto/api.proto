@@ -23,8 +23,20 @@ service API{
       get: "/check/{epoch}"
     };
   }
+  rpc GetTasks(GetTasksRequest) returns (GetTasksResponse) {
+    option (google.api.http) = {
+      get: "/get_tasks"
+    };
+  }
 }
 
+message GetTasksRequest {
+  ProcessStatus status = 1;
+}
+
+message GetTasksResponse {
+  repeated TaskRecord records = 1;
+}
 
 message UpdateDataRequest {
   repeated Certiticate certificates = 1;
@@ -36,6 +48,7 @@ message UpdateDataResponse {
 
 message CheckUpdateRequest {
    string update_number = 1;
+   uint64 epoch = 2;
 }
 
 message CheckUpdateResponse {
