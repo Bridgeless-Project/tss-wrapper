@@ -187,7 +187,13 @@ func (t Task) Execute(ctx context.Context) error {
 	if err := cmd.Run(); err != nil {
 		return errors.Wrap(err, "failed to execute resharing task")
 	}
-
+	opt := make([]retry.Option, 0)
+	if t.isNewParty() {
+		opt = append(opt,
+			retry.Delay(3*time.Minute),
+			retry.Attempts(30),
+		)
+	}
 	var (
 		epochId       uint32
 		bridgeAddress string
@@ -208,6 +214,7 @@ func (t Task) Execute(ctx context.Context) error {
 			}
 			return nil
 		},
+		opt...,
 	)
 	if err != nil {
 		return errors.Wrap(err, "failed to wait updated epoch")
@@ -217,7 +224,9 @@ func (t Task) Execute(ctx context.Context) error {
 		func() error {
 			epoch, err = helpers.GetEpochState(ctx, epochId, t.GRPCCore)
 			return err
-		})
+		},
+		opt...,
+	)
 
 	if err != nil {
 		return errors.Wrap(err, "failed to get epoch state")
@@ -228,6 +237,7 @@ func (t Task) Execute(ctx context.Context) error {
 			bridgeAddress, err = helpers.GetChainAddress(ctx, bridgetypes.ChainType_BITCOIN, t.GRPCCore)
 			return err
 		},
+		opt...,
 	)
 	if err != nil {
 		return errors.Wrap(err, "failed to get bitcoin bridge address")
@@ -243,6 +253,7 @@ func (t Task) Execute(ctx context.Context) error {
 			blockTime = block.Block.Time
 			return nil
 		},
+		opt...,
 	)
 	if err != nil {
 		return errors.Wrap(err, "failed to get blocktime ")
