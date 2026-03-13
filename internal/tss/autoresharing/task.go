@@ -260,7 +260,12 @@ func (t Task) Execute(ctx context.Context) (bool, error) {
 		return !isRevoked, errors.Wrap(err, "failed to get blocktime ")
 	}
 
-	return !isRevoked, errors.Wrap(t.updateConfigAfterResharing(epoch, blockTime.Add(10*time.Minute), bridgeAddress), "failed to update config after start")
+	// do not change config if party is revoked, just return
+	if isRevoked {
+		return true, nil
+	}
+
+	return true, errors.Wrap(t.updateConfigAfterResharing(epoch, blockTime.Add(10*time.Minute), bridgeAddress), "failed to update config after start")
 }
 
 func (t Task) updateConfigBeforeResharing() error {

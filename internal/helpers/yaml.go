@@ -220,12 +220,13 @@ func (c *ConfigManager) UpdateBitcoinWallet(address string, epoch uint32, chainI
 		if chainMap[keyChainId] != chainId {
 			continue
 		}
+
 		chainMap[keyBridgeAddress] = address
 		rpc := chainMap[keyPRC].(map[string]interface{})
 		wallet := rpc[keyWallet].(map[string]interface{})
 		host := wallet[keyHost].(string)
 		hostParts := strings.SplitAfter(host, "/wallet/")
-		wallet[keyHost] = hostParts[0] + "/wallet/" + fmt.Sprintf("%s/wallet/%d", hostParts[0], epoch)
+		wallet[keyHost] = fmt.Sprintf("%s/wallet/%d_%s", hostParts[0], epoch, address)
 	}
 
 	return nil
