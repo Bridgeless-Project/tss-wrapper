@@ -29,7 +29,7 @@ const (
 	keyPRC              = "rpc"
 	keyWallet           = "wallet"
 	keyHost             = "host"
-	keyBridgeAddress    = "bridge_address"
+	keyBridgeAddress    = "bridge_addresses"
 )
 
 type ConfigManager struct {
@@ -221,12 +221,17 @@ func (c *ConfigManager) UpdateBitcoinWallet(address string, epoch uint32, chainI
 			continue
 		}
 
-		chainMap[keyBridgeAddress] = address
+		chainMap[keyChainId] = chainId
+		bridgeAddresses := chainMap[keyBridgeAddress].([]interface{})
+		bridgeAddresses = append(bridgeAddresses, address)
+
+		chainMap[keyBridgeAddress] = bridgeAddresses
+
 		rpc := chainMap[keyPRC].(map[string]interface{})
 		wallet := rpc[keyWallet].(map[string]interface{})
 		host := wallet[keyHost].(string)
-		hostParts := strings.SplitAfter(host, "/wallet/")
-		wallet[keyHost] = fmt.Sprintf("%s/wallet/%d_%s", hostParts[0], epoch, address)
+		hostParts := strings.SplitAfter(host, "/wallet")
+		wallet[keyHost] = fmt.Sprintf("%s/%d_%s", hostParts[0], epoch, address)
 	}
 
 	return nil
