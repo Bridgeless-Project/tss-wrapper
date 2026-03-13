@@ -324,7 +324,7 @@ var File_api_proto protoreflect.FileDescriptor
 
 const file_api_proto_rawDesc = "" +
 	"\n" +
-	"\tapi.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x14gogoproto/gogo.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x11types/party.proto\x1a\x11types/const.proto\"e\n" +
+	"\tapi.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x14gogoproto/gogo.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\vparty.proto\x1a\vconst.proto\"e\n" +
 	"\x0fGetTasksRequest\x12&\n" +
 	"\x06status\x18\x01 \x01(\x0e2\x0e.ProcessStatusR\x06status\x12\x14\n" +
 	"\x05pages\x18\x02 \x01(\x04R\x05pages\x12\x14\n" +
@@ -345,8 +345,8 @@ const file_api_proto_rawDesc = "" +
 	"\x03API\x12P\n" +
 	"\vCheckUpdate\x12\x13.CheckUpdateRequest\x1a\x14.CheckUpdateResponse\"\x16\x82\xd3\xe4\x93\x02\x10\x12\x0e/check/{epoch}\x12C\n" +
 	"\bGetTasks\x12\x10.GetTasksRequest\x1a\x11.GetTasksResponse\"\x12\x82\xd3\xe4\x93\x02\f\x12\n" +
-	"/get_tasksBc\x92A\x1e\x12\x1c\n" +
-	"\x13TSS-wrapper-svc API2\x050.1.0Z@github.com/Bridgeless-Project/tss-wrapper-svc/internal/api/typesb\x06proto3"
+	"/get_tasksBe\x92A\x1e\x12\x1c\n" +
+	"\x13TSS-wrapper-svc API2\x050.1.0ZBgithub.com/Bridgeless-Project/tss-wrapper-svc/internal/types/typesb\x06proto3"
 
 var (
 	file_api_proto_rawDescOnce sync.Once
@@ -393,8 +393,8 @@ func file_api_proto_init() {
 	if File_api_proto != nil {
 		return
 	}
-	file_types_party_proto_init()
-	file_types_const_proto_init()
+	file_party_proto_init()
+	file_const_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

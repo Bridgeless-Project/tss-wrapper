@@ -8,9 +8,9 @@ import (
 	"strings"
 	"syscall"
 
+	pbTypes "github.com/Bridgeless-Project/tss-wrapper-svc/internal/api/grpc/types"
 	db "github.com/Bridgeless-Project/tss-wrapper-svc/internal/data"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/types"
-	pbTypes "github.com/Bridgeless-Project/tss-wrapper-svc/resources/types"
 	"github.com/pkg/errors"
 	"gitlab.com/distributed_lab/logan/v3"
 )
@@ -48,9 +48,9 @@ func (o *Orchestrator) StartDefaultMode(ctx context.Context) error {
 	if isApiNeeded {
 		o.apiCmd = exec.CommandContext(ctx, o.binaryPath, o.apiParams...)
 		if err := o.apiCmd.Start(); err != nil {
-			return errors.Wrap(err, "failed to start api")
+			return errors.Wrap(err, "failed to start types")
 		}
-		o.logger.WithField("binary", o.binaryPath).Info("started api mode")
+		o.logger.WithField("binary", o.binaryPath).Info("started types mode")
 	}
 
 	if err := o.coreCmd.Start(); err != nil {
@@ -122,7 +122,7 @@ func (o *Orchestrator) Run(ctx context.Context) error {
 
 			if o.apiCmd != nil {
 				if err := o.apiCmd.Process.Signal(syscall.SIGTERM); err != nil {
-					return errors.Wrap(err, "failed to kill api process")
+					return errors.Wrap(err, "failed to kill types process")
 				}
 				// TODO: handle zombi process
 			}

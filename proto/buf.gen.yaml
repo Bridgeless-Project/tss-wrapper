@@ -1,7 +1,7 @@
 version: v1
 plugins:
   - plugin: go
-    out: ../resources
+    out: ../internal/api/grpc/types
     opt:
       - paths=source_relative
 

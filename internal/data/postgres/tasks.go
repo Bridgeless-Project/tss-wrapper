@@ -3,8 +3,8 @@ package pg
 import (
 	"time"
 
+	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/api/grpc/types"
 	db "github.com/Bridgeless-Project/tss-wrapper-svc/internal/data"
-	"github.com/Bridgeless-Project/tss-wrapper-svc/resources/types"
 	"github.com/Masterminds/squirrel"
 	"github.com/pkg/errors"
 	"gitlab.com/distributed_lab/kit/pgdb"

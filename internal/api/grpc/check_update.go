@@ -4,7 +4,7 @@ import (
 	"context"
 
 	apiCtx "github.com/Bridgeless-Project/tss-wrapper-svc/internal/api/grpc/ctx"
-	types2 "github.com/Bridgeless-Project/tss-wrapper-svc/resources"
+	types2 "github.com/Bridgeless-Project/tss-wrapper-svc/internal/api/grpc/types"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

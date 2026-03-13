@@ -8,6 +8,7 @@ import (
 
 	"github.com/Bridgeless-Project/tss-wrapper-svc/cmd/utils"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/api"
+	pbTypes "github.com/Bridgeless-Project/tss-wrapper-svc/internal/api/grpc/types"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/config"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/core"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/core/observer"
@@ -17,7 +18,6 @@ import (
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/tss/autoresharing"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/tss/update"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/types"
-	pbTypes "github.com/Bridgeless-Project/tss-wrapper-svc/resources/types"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"gitlab.com/distributed_lab/logan/v3"
@@ -76,7 +76,7 @@ func runService(ctx context.Context, cfg config.Config) error {
 	)
 
 	apiServer := api.NewServer(cfg.GRPCListener(), cfg.HTTPListener(), tasksDb,
-		logger.WithField("component", "api-server"))
+		logger.WithField("component", "types-server"))
 
 	for _, eventCfg := range eventsConfig {
 		task, err := createTask(eventCfg.TaskType, cfg)

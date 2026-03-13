@@ -1,17 +1,16 @@
 package common
 
 import (
+	types2 "github.com/Bridgeless-Project/tss-wrapper-svc/internal/api/grpc/types"
 	db "github.com/Bridgeless-Project/tss-wrapper-svc/internal/data"
-	types "github.com/Bridgeless-Project/tss-wrapper-svc/resources"
-	types2 "github.com/Bridgeless-Project/tss-wrapper-svc/resources/types"
 )
 
-func ToGetTasksResponse(records []db.TaskRecord) *types.GetTasksResponse {
+func ToGetTasksResponse(records []db.TaskRecord) *types2.GetTasksResponse {
 	mapped := make([]*types2.TaskRecord, len(records))
 	for i := range records {
 		mapped[i] = ToResponseTaskRecord(records[i])
 	}
-	return &types.GetTasksResponse{Records: mapped}
+	return &types2.GetTasksResponse{Records: mapped}
 }
 
 func ToResponseTaskRecord(record db.TaskRecord) *types2.TaskRecord {

@@ -10,7 +10,7 @@ import (
 	"github.com/Bridgeless-Project/tss-wrapper-svc/docs"
 	srvgrpc "github.com/Bridgeless-Project/tss-wrapper-svc/internal/api/grpc"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/api/grpc/ctx"
-	types2 "github.com/Bridgeless-Project/tss-wrapper-svc/internal/api/types"
+	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/api/grpc/types"
 	db "github.com/Bridgeless-Project/tss-wrapper-svc/internal/data"
 	"github.com/go-chi/chi/v5"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
@@ -91,11 +91,11 @@ func (s *Server) httpRouter(ctxt context.Context) http.Handler {
 
 	// pointing to grpc implementation
 	grpcGatewayRouter := runtime.NewServeMux()
-	_ = types2.RegisterAPIHandlerServer(ctxt, grpcGatewayRouter, srvgrpc.Implementation{})
+	_ = types.RegisterAPIHandlerServer(ctxt, grpcGatewayRouter, srvgrpc.Implementation{})
 
 	router.Mount("/", grpcGatewayRouter)
-	router.Mount("/static/api.swagger.json", http.FileServer(http.FS(docs.Docs)))
-	router.HandleFunc("/api", openapiconsole.Handler("Relayer service API", "/static/api.swagger.json"))
+	router.Mount("/static/types.swagger.json", http.FileServer(http.FS(docs.Docs)))
+	router.HandleFunc("/api", openapiconsole.Handler("Relayer service API", "/static/types.swagger.json"))
 
 	return router
 }
@@ -105,7 +105,7 @@ func (s *Server) grpcServer() *grpc.Server {
 		grpc.ChainUnaryInterceptor(),
 	)
 
-	types2.RegisterAPIServer(srv, srvgrpc.Implementation{})
+	types.RegisterAPIServer(srv, srvgrpc.Implementation{})
 	reflection.Register(srv)
 
 	return srv

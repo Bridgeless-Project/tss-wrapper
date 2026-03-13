@@ -5,7 +5,7 @@ import (
 
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/api/common"
 	apiCtx "github.com/Bridgeless-Project/tss-wrapper-svc/internal/api/grpc/ctx"
-	types2 "github.com/Bridgeless-Project/tss-wrapper-svc/resources"
+	types2 "github.com/Bridgeless-Project/tss-wrapper-svc/internal/api/grpc/types"
 	"gitlab.com/distributed_lab/kit/pgdb"
 	"google.golang.org/grpc/status"
 

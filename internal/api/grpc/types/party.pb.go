@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        (unknown)
-// source: types/party.proto
+// source: party.proto
 
 package types
 
@@ -33,7 +33,7 @@ type Certiticate struct {
 
 func (x *Certiticate) Reset() {
 	*x = Certiticate{}
-	mi := &file_types_party_proto_msgTypes[0]
+	mi := &file_party_proto_msgTypes[0]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -45,7 +45,7 @@ func (x *Certiticate) String() string {
 func (*Certiticate) ProtoMessage() {}
 
 func (x *Certiticate) ProtoReflect() protoreflect.Message {
-	mi := &file_types_party_proto_msgTypes[0]
+	mi := &file_party_proto_msgTypes[0]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -58,7 +58,7 @@ func (x *Certiticate) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use Certiticate.ProtoReflect.Descriptor instead.
 func (*Certiticate) Descriptor() ([]byte, []int) {
-	return file_types_party_proto_rawDescGZIP(), []int{0}
+	return file_party_proto_rawDescGZIP(), []int{0}
 }
 
 func (x *Certiticate) GetData() []byte {
@@ -81,7 +81,7 @@ type TaskRecord struct {
 
 func (x *TaskRecord) Reset() {
 	*x = TaskRecord{}
-	mi := &file_types_party_proto_msgTypes[1]
+	mi := &file_party_proto_msgTypes[1]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -93,7 +93,7 @@ func (x *TaskRecord) String() string {
 func (*TaskRecord) ProtoMessage() {}
 
 func (x *TaskRecord) ProtoReflect() protoreflect.Message {
-	mi := &file_types_party_proto_msgTypes[1]
+	mi := &file_party_proto_msgTypes[1]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -106,7 +106,7 @@ func (x *TaskRecord) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use TaskRecord.ProtoReflect.Descriptor instead.
 func (*TaskRecord) Descriptor() ([]byte, []int) {
-	return file_types_party_proto_rawDescGZIP(), []int{1}
+	return file_party_proto_rawDescGZIP(), []int{1}
 }
 
 func (x *TaskRecord) GetId() int64 {
@@ -144,11 +144,11 @@ func (x *TaskRecord) GetError() string {
 	return ""
 }
 
-var File_types_party_proto protoreflect.FileDescriptor
+var File_party_proto protoreflect.FileDescriptor
 
-const file_types_party_proto_rawDesc = "" +
+const file_party_proto_rawDesc = "" +
 	"\n" +
-	"\x11types/party.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x14gogoproto/gogo.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x11types/const.proto\"!\n" +
+	"\vparty.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x14gogoproto/gogo.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\vconst.proto\"!\n" +
 	"\vCertiticate\x12\x12\n" +
 	"\x04data\x18\x01 \x01(\fR\x04data\"\x8a\x01\n" +
 	"\n" +
@@ -157,27 +157,27 @@ const file_types_party_proto_rawDesc = "" +
 	"\btasktype\x18\x02 \x01(\tR\btasktype\x12&\n" +
 	"\x06status\x18\x03 \x01(\x0e2\x0e.ProcessStatusR\x06status\x12\x12\n" +
 	"\x04data\x18\x04 \x01(\tR\x04data\x12\x14\n" +
-	"\x05error\x18\x05 \x01(\tR\x05errorBBZ@github.com/Bridgeless-Project/tss-wrapper-svc/internal/api/typesb\x06proto3"
+	"\x05error\x18\x05 \x01(\tR\x05errorBDZBgithub.com/Bridgeless-Project/tss-wrapper-svc/internal/types/typesb\x06proto3"
 
 var (
-	file_types_party_proto_rawDescOnce sync.Once
-	file_types_party_proto_rawDescData []byte
+	file_party_proto_rawDescOnce sync.Once
+	file_party_proto_rawDescData []byte
 )
 
-func file_types_party_proto_rawDescGZIP() []byte {
-	file_types_party_proto_rawDescOnce.Do(func() {
-		file_types_party_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_types_party_proto_rawDesc), len(file_types_party_proto_rawDesc)))
+func file_party_proto_rawDescGZIP() []byte {
+	file_party_proto_rawDescOnce.Do(func() {
+		file_party_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_party_proto_rawDesc), len(file_party_proto_rawDesc)))
 	})
-	return file_types_party_proto_rawDescData
+	return file_party_proto_rawDescData
 }
 
-var file_types_party_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
-var file_types_party_proto_goTypes = []any{
+var file_party_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_party_proto_goTypes = []any{
 	(*Certiticate)(nil), // 0: Certiticate
 	(*TaskRecord)(nil),  // 1: TaskRecord
 	(ProcessStatus)(0),  // 2: ProcessStatus
 }
-var file_types_party_proto_depIdxs = []int32{
+var file_party_proto_depIdxs = []int32{
 	2, // 0: TaskRecord.status:type_name -> ProcessStatus
 	1, // [1:1] is the sub-list for method output_type
 	1, // [1:1] is the sub-list for method input_type
@@ -186,27 +186,27 @@ var file_types_party_proto_depIdxs = []int32{
 	0, // [0:1] is the sub-list for field type_name
 }
 
-func init() { file_types_party_proto_init() }
-func file_types_party_proto_init() {
-	if File_types_party_proto != nil {
+func init() { file_party_proto_init() }
+func file_party_proto_init() {
+	if File_party_proto != nil {
 		return
 	}
-	file_types_const_proto_init()
+	file_const_proto_init()
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_types_party_proto_rawDesc), len(file_types_party_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_party_proto_rawDesc), len(file_party_proto_rawDesc)),
 			NumEnums:      0,
 			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_types_party_proto_goTypes,
-		DependencyIndexes: file_types_party_proto_depIdxs,
-		MessageInfos:      file_types_party_proto_msgTypes,
+		GoTypes:           file_party_proto_goTypes,
+		DependencyIndexes: file_party_proto_depIdxs,
+		MessageInfos:      file_party_proto_msgTypes,
 	}.Build()
-	File_types_party_proto = out.File
-	file_types_party_proto_goTypes = nil
-	file_types_party_proto_depIdxs = nil
+	File_party_proto = out.File
+	file_party_proto_goTypes = nil
+	file_party_proto_depIdxs = nil
 }

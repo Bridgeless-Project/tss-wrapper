@@ -2,7 +2,7 @@
 // versions:
 // 	protoc-gen-go v1.36.11
 // 	protoc        (unknown)
-// source: types/const.proto
+// source: const.proto
 
 package types
 
@@ -66,11 +66,11 @@ func (x ProcessStatus) String() string {
 }
 
 func (ProcessStatus) Descriptor() protoreflect.EnumDescriptor {
-	return file_types_const_proto_enumTypes[0].Descriptor()
+	return file_const_proto_enumTypes[0].Descriptor()
 }
 
 func (ProcessStatus) Type() protoreflect.EnumType {
-	return &file_types_const_proto_enumTypes[0]
+	return &file_const_proto_enumTypes[0]
 }
 
 func (x ProcessStatus) Number() protoreflect.EnumNumber {
@@ -79,39 +79,39 @@ func (x ProcessStatus) Number() protoreflect.EnumNumber {
 
 // Deprecated: Use ProcessStatus.Descriptor instead.
 func (ProcessStatus) EnumDescriptor() ([]byte, []int) {
-	return file_types_const_proto_rawDescGZIP(), []int{0}
+	return file_const_proto_rawDescGZIP(), []int{0}
 }
 
-var File_types_const_proto protoreflect.FileDescriptor
+var File_const_proto protoreflect.FileDescriptor
 
-const file_types_const_proto_rawDesc = "" +
+const file_const_proto_rawDesc = "" +
 	"\n" +
-	"\x11types/const.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x14gogoproto/gogo.proto\x1a.protoc-gen-openapiv2/options/annotations.proto*\xb6\x01\n" +
+	"\vconst.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x14gogoproto/gogo.proto\x1a.protoc-gen-openapiv2/options/annotations.proto*\xb6\x01\n" +
 	"\rProcessStatus\x12\x1a\n" +
 	"\x16PROCESS_STATUS_CREATED\x10\x00\x12\x1a\n" +
 	"\x16PROCESS_STATUS_PLANNED\x10\x01\x12\x1a\n" +
 	"\x16PROCESS_STATUS_ONGOING\x10\x02\x12\x1c\n" +
 	"\x18PROCESS_STATUS_COMPLETED\x10\x03\x12\x19\n" +
 	"\x15PROCESS_STATUS_FAILED\x10\x04\x12\x18\n" +
-	"\x14PROCESS_STATUS_RETRY\x10\x05BBZ@github.com/Bridgeless-Project/tss-wrapper-svc/internal/api/typesb\x06proto3"
+	"\x14PROCESS_STATUS_RETRY\x10\x05BDZBgithub.com/Bridgeless-Project/tss-wrapper-svc/internal/types/typesb\x06proto3"
 
 var (
-	file_types_const_proto_rawDescOnce sync.Once
-	file_types_const_proto_rawDescData []byte
+	file_const_proto_rawDescOnce sync.Once
+	file_const_proto_rawDescData []byte
 )
 
-func file_types_const_proto_rawDescGZIP() []byte {
-	file_types_const_proto_rawDescOnce.Do(func() {
-		file_types_const_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_types_const_proto_rawDesc), len(file_types_const_proto_rawDesc)))
+func file_const_proto_rawDescGZIP() []byte {
+	file_const_proto_rawDescOnce.Do(func() {
+		file_const_proto_rawDescData = protoimpl.X.CompressGZIP(unsafe.Slice(unsafe.StringData(file_const_proto_rawDesc), len(file_const_proto_rawDesc)))
 	})
-	return file_types_const_proto_rawDescData
+	return file_const_proto_rawDescData
 }
 
-var file_types_const_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_types_const_proto_goTypes = []any{
+var file_const_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
+var file_const_proto_goTypes = []any{
 	(ProcessStatus)(0), // 0: ProcessStatus
 }
-var file_types_const_proto_depIdxs = []int32{
+var file_const_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for method output_type
 	0, // [0:0] is the sub-list for method input_type
 	0, // [0:0] is the sub-list for extension type_name
@@ -119,26 +119,26 @@ var file_types_const_proto_depIdxs = []int32{
 	0, // [0:0] is the sub-list for field type_name
 }
 
-func init() { file_types_const_proto_init() }
-func file_types_const_proto_init() {
-	if File_types_const_proto != nil {
+func init() { file_const_proto_init() }
+func file_const_proto_init() {
+	if File_const_proto != nil {
 		return
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
-			RawDescriptor: unsafe.Slice(unsafe.StringData(file_types_const_proto_rawDesc), len(file_types_const_proto_rawDesc)),
+			RawDescriptor: unsafe.Slice(unsafe.StringData(file_const_proto_rawDesc), len(file_const_proto_rawDesc)),
 			NumEnums:      1,
 			NumMessages:   0,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
-		GoTypes:           file_types_const_proto_goTypes,
-		DependencyIndexes: file_types_const_proto_depIdxs,
-		EnumInfos:         file_types_const_proto_enumTypes,
+		GoTypes:           file_const_proto_goTypes,
+		DependencyIndexes: file_const_proto_depIdxs,
+		EnumInfos:         file_const_proto_enumTypes,
 	}.Build()
-	File_types_const_proto = out.File
-	file_types_const_proto_goTypes = nil
-	file_types_const_proto_depIdxs = nil
+	File_const_proto = out.File
+	file_const_proto_goTypes = nil
+	file_const_proto_depIdxs = nil
 }

@@ -1,10 +1,10 @@
 package db
 
 import (
-	"gitlab.com/distributed_lab/kit/pgdb"
 	"time"
 
-	"github.com/Bridgeless-Project/tss-wrapper-svc/resources/types"
+	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/api/grpc/types"
+	"gitlab.com/distributed_lab/kit/pgdb"
 )
 
 type TaskRecord struct {

@@ -3,9 +3,9 @@ syntax = "proto3";
 import "google/api/annotations.proto";
 import "gogoproto/gogo.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
-import "types/const.proto";
+import "const.proto";
 
-option go_package = "github.com/Bridgeless-Project/tss-wrapper-svc/internal/api/types";
+option go_package = "github.com/Bridgeless-Project/tss-wrapper-svc/internal/types/types";
 
 message Certiticate {
   bytes data = 1;

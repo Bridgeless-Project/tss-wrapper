@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"time"
 
+	pbTypes "github.com/Bridgeless-Project/tss-wrapper-svc/internal/api/grpc/types"
 	db "github.com/Bridgeless-Project/tss-wrapper-svc/internal/data"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/helpers"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/types"
-	pbTypes "github.com/Bridgeless-Project/tss-wrapper-svc/resources/types"
 	"github.com/pkg/errors"
 	abciTypes "github.com/tendermint/tendermint/abci/types"
 	coretypes "github.com/tendermint/tendermint/rpc/core/types"
