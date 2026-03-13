@@ -10,17 +10,13 @@ import (
 type ctxKey int
 
 const (
-	dbKey          ctxKey = iota
-	loggerKey      ctxKey = iota
-	clientsRepoKey ctxKey = iota
-	broadcasterKey ctxKey = iota
-	connectorKey   ctxKey = iota
+	dbKey ctxKey = iota
+	loggerKey
 )
 
-func DBProvider(q db.TasksQ) func(context.Context) context.Context {
+func DBProvider(value db.TasksQ) func(context.Context) context.Context {
 	return func(ctx context.Context) context.Context {
-
-		return context.WithValue(ctx, dbKey, q)
+		return context.WithValue(ctx, dbKey, value)
 	}
 }
 

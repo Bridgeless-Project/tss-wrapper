@@ -87,11 +87,14 @@ func (q *tasksQ) FilterByStatus(status types.ProcessStatus) db.TasksQ {
 	return q
 }
 
-func (q *tasksQ) Get() ([]db.TaskRecord, error) {
-	stmt := q.selector.OrderBy(taskCreatedAtField + " ASC")
+func (q *tasksQ) OrderByCreatedAt() db.TasksQ {
+	q.selector = q.selector.OrderBy(taskCreatedAtField + " ASC")
+	return q
+}
 
+func (q *tasksQ) GetAll() ([]db.TaskRecord, error) {
 	var records []db.TaskRecord
-	err := q.db.Select(&records, stmt)
+	err := q.db.Select(&records, q.selector)
 	if err != nil {
 		return nil, errors.Wrap(err, "failed to get tasks")
 	}
@@ -100,7 +103,7 @@ func (q *tasksQ) Get() ([]db.TaskRecord, error) {
 }
 
 func (q *tasksQ) GetIncomplete() ([]db.TaskRecord, error) {
-	// Get tasks that are not COMPLETED and not FAILED
+	// GetAll tasks that are not COMPLETED and not FAILED
 	stmt := q.selector.Where(
 		squirrel.And{
 			squirrel.NotEq{taskStatusField: int32(types.ProcessStatus_PROCESS_STATUS_COMPLETED)},

@@ -24,6 +24,7 @@ type TasksQ interface {
 	UpdateStatusWithError(id int64, status types.ProcessStatus, errMsg string) error
 	Page(pageParams pgdb.OffsetPageParams) TasksQ
 	FilterByStatus(status types.ProcessStatus) TasksQ
-	Get() ([]TaskRecord, error)
+	OrderByCreatedAt() TasksQ
+	GetAll() ([]TaskRecord, error)
 	GetIncomplete() ([]TaskRecord, error) //status != COMPLETED and status != FAILED
 }

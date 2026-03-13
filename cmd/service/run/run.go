@@ -75,8 +75,12 @@ func runService(ctx context.Context, cfg config.Config) error {
 		tasksDb,
 	)
 
-	apiServer := api.NewServer(cfg.GRPCListener(), cfg.HTTPListener(), tasksDb,
-		logger.WithField("component", "types-server"))
+	apiServer := api.NewServer(
+		cfg.GRPCListener(),
+		cfg.HTTPListener(),
+		tasksDb,
+		logger.WithField("component", "server"),
+	)
 
 	for _, eventCfg := range eventsConfig {
 		task, err := createTask(eventCfg.TaskType, cfg)

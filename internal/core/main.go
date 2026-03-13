@@ -8,7 +8,7 @@ import (
 	"strings"
 	"syscall"
 
-	pbTypes "github.com/Bridgeless-Project/tss-wrapper-svc/internal/api/grpc/types"
+	grpcTypes "github.com/Bridgeless-Project/tss-wrapper-svc/internal/api/grpc/types"
 	db "github.com/Bridgeless-Project/tss-wrapper-svc/internal/data"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/types"
 	"github.com/pkg/errors"
@@ -48,9 +48,9 @@ func (o *Orchestrator) StartDefaultMode(ctx context.Context) error {
 	if isApiNeeded {
 		o.apiCmd = exec.CommandContext(ctx, o.binaryPath, o.apiParams...)
 		if err := o.apiCmd.Start(); err != nil {
-			return errors.Wrap(err, "failed to start types")
+			return errors.Wrap(err, "failed to start api")
 		}
-		o.logger.WithField("binary", o.binaryPath).Info("started types mode")
+		o.logger.WithField("binary", o.binaryPath).Info("started api mode")
 	}
 
 	if err := o.coreCmd.Start(); err != nil {
@@ -134,7 +134,7 @@ func (o *Orchestrator) Run(ctx context.Context) error {
 			}
 
 			// Update task status to Completed
-			if err = o.tasksDb.UpdateStatus(taskID, pbTypes.ProcessStatus_PROCESS_STATUS_COMPLETED); err != nil {
+			if err = o.tasksDb.UpdateStatus(taskID, grpcTypes.ProcessStatus_PROCESS_STATUS_COMPLETED); err != nil {
 				o.logger.WithError(err).
 					WithField("task_id", taskID).
 					Error("failed to update task status to completed")
@@ -155,7 +155,7 @@ func (o *Orchestrator) Run(ctx context.Context) error {
 
 // updateTaskFailed updates task status to Failed with error message
 func (o *Orchestrator) updateTaskFailed(taskID int64, err error) {
-	if updateErr := o.tasksDb.UpdateStatusWithError(taskID, pbTypes.ProcessStatus_PROCESS_STATUS_FAILED, err.Error()); updateErr != nil {
+	if updateErr := o.tasksDb.UpdateStatusWithError(taskID, grpcTypes.ProcessStatus_PROCESS_STATUS_FAILED, err.Error()); updateErr != nil {
 		o.logger.WithError(updateErr).
 			WithField("task_id", taskID).
 			Error("failed to update task status to failed")

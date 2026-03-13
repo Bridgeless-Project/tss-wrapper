@@ -16,6 +16,7 @@ import (
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
 	"gitlab.com/distributed_lab/ape"
 	"gitlab.com/distributed_lab/logan/v3"
+	errors2 "gitlab.com/distributed_lab/logan/v3/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 
@@ -53,14 +54,22 @@ func (s *Server) RunGRPC(ctx context.Context) error {
 	srv := s.grpcServer()
 
 	// graceful shutdown
-	go func() { <-ctx.Done(); srv.GracefulStop(); s.logger.Debug("grpc serving stopped: context canceled") }()
+	go func() {
+		<-ctx.Done()
+		srv.GracefulStop()
+		s.logger.Debug("grpc serving stopped: context canceled")
+	}()
 
 	s.logger.Debug("grpc serving started")
 	return srv.Serve(s.grpc)
 }
 
 func (s *Server) RunHTTP(ctxt context.Context) error {
-	srv := &http.Server{Handler: s.httpRouter(ctxt)}
+	handler, err := s.httpRouter(ctxt)
+	if err != nil {
+		return err
+	}
+	srv := &http.Server{Handler: handler}
 
 	// graceful shutdown
 	go func() {
@@ -81,7 +90,7 @@ func (s *Server) RunHTTP(ctxt context.Context) error {
 	return nil
 }
 
-func (s *Server) httpRouter(ctxt context.Context) http.Handler {
+func (s *Server) httpRouter(ctxt context.Context) (http.Handler, error) {
 	router := chi.NewRouter()
 	router.Use(
 		ape.LoganMiddleware(s.logger),
@@ -91,13 +100,17 @@ func (s *Server) httpRouter(ctxt context.Context) http.Handler {
 
 	// pointing to grpc implementation
 	grpcGatewayRouter := runtime.NewServeMux()
-	_ = types.RegisterAPIHandlerServer(ctxt, grpcGatewayRouter, srvgrpc.Implementation{})
+	err := types.RegisterAPIHandlerServer(ctxt, grpcGatewayRouter, srvgrpc.Implementation{})
+	if err != nil {
+
+		return nil, errors2.Wrap(err, "failed to regiser api handler")
+	}
 
 	router.Mount("/", grpcGatewayRouter)
 	router.Mount("/static/types.swagger.json", http.FileServer(http.FS(docs.Docs)))
 	router.HandleFunc("/api", openapiconsole.Handler("Relayer service API", "/static/types.swagger.json"))
 
-	return router
+	return router, nil
 }
 
 func (s *Server) grpcServer() *grpc.Server {
