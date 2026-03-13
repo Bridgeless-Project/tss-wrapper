@@ -2,25 +2,26 @@ package common
 
 import (
 	db "github.com/Bridgeless-Project/tss-wrapper-svc/internal/data"
-	grpcTypes "github.com/Bridgeless-Project/tss-wrapper-svc/resources"
+	"github.com/Bridgeless-Project/tss-wrapper-svc/resources"
+	"github.com/Bridgeless-Project/tss-wrapper-svc/resources/types"
 	"gitlab.com/distributed_lab/kit/pgdb"
 )
 
-func ToGetTasksResponse(records []db.TaskRecord) *grpcTypes.GetTasksResponse {
-	mapped := make([]*grpcTypes.TaskRecord, 0, len(records))
+func ToGetTasksResponse(records []db.TaskRecord) *resources.GetTasksResponse {
+	mapped := make([]*types.TaskRecord, 0, len(records))
 	for _, task := range records {
 		record := ToResponseTaskRecord(task)
 		mapped = append(mapped, &record)
 	}
-	return &grpcTypes.GetTasksResponse{Records: mapped}
+	return &resources.GetTasksResponse{Records: mapped}
 }
 
-func ToResponseTaskRecord(record db.TaskRecord) grpcTypes.TaskRecord {
+func ToResponseTaskRecord(record db.TaskRecord) types.TaskRecord {
 	var errMessage string
 	if record.Error != nil {
 		errMessage = *record.Error
 	}
-	return grpcTypes.TaskRecord{
+	return types.TaskRecord{
 		Id:       record.ID,
 		Tasktype: record.TaskType,
 		Status:   record.Status,

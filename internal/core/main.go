@@ -10,7 +10,7 @@ import (
 
 	db "github.com/Bridgeless-Project/tss-wrapper-svc/internal/data"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/types"
-	grpcTypes "github.com/Bridgeless-Project/tss-wrapper-svc/resources"
+	grpcTypes "github.com/Bridgeless-Project/tss-wrapper-svc/resources/types"
 	"github.com/pkg/errors"
 	"gitlab.com/distributed_lab/logan/v3"
 )

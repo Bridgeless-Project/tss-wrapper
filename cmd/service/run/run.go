@@ -17,7 +17,7 @@ import (
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/tss/autoresharing"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/tss/update"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/types"
-	pbTypes "github.com/Bridgeless-Project/tss-wrapper-svc/resources"
+	grpcTypes "github.com/Bridgeless-Project/tss-wrapper-svc/resources/types"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"gitlab.com/distributed_lab/logan/v3"
@@ -156,7 +156,7 @@ func loadIncompleteTasks(
 		task.SetID(record.ID)
 
 		// Update status to Planned and schedule
-		if err := tasksDb.UpdateStatus(record.ID, pbTypes.ProcessStatus_PROCESS_STATUS_PLANNED); err != nil {
+		if err := tasksDb.UpdateStatus(record.ID, grpcTypes.ProcessStatus_PROCESS_STATUS_PLANNED); err != nil {
 			logger.WithError(err).
 				WithField("task_id", record.ID).
 				Error("failed to update task status to planned")

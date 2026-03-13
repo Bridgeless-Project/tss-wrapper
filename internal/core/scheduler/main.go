@@ -6,7 +6,7 @@ import (
 
 	db "github.com/Bridgeless-Project/tss-wrapper-svc/internal/data"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/types"
-	pbTypes "github.com/Bridgeless-Project/tss-wrapper-svc/resources"
+	grpcTypes "github.com/Bridgeless-Project/tss-wrapper-svc/resources/types"
 	"gitlab.com/distributed_lab/logan/v3"
 )
 
@@ -56,7 +56,7 @@ func (s *Scheduler) handleIncomingTasks(ctx context.Context) {
 			return
 		case task := <-s.taskChan:
 			// Update status to Planned when scheduling starts
-			if err := s.tasksDb.UpdateStatus(task.GetID(), pbTypes.ProcessStatus_PROCESS_STATUS_PLANNED); err != nil {
+			if err := s.tasksDb.UpdateStatus(task.GetID(), grpcTypes.ProcessStatus_PROCESS_STATUS_PLANNED); err != nil {
 				s.logger.WithError(err).
 					WithField("task_id", task.GetID()).
 					Error("failed to update task status to planned")
@@ -75,7 +75,7 @@ func (s *Scheduler) handleScheduledTime(ctx context.Context) {
 			return
 		case task := <-s.readyTasks:
 			// Update status to Ongoing when task is ready for execution
-			if err := s.tasksDb.UpdateStatus(task.GetID(), pbTypes.ProcessStatus_PROCESS_STATUS_ONGOING); err != nil {
+			if err := s.tasksDb.UpdateStatus(task.GetID(), grpcTypes.ProcessStatus_PROCESS_STATUS_ONGOING); err != nil {
 				s.logger.WithError(err).
 					WithField("task_id", task.GetID()).
 					Error("failed to update task status to ongoing")

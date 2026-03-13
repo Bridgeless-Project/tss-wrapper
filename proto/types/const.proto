@@ -4,7 +4,7 @@ import "google/api/annotations.proto";
 import "gogoproto/gogo.proto";
 import "protoc-gen-openapiv2/options/annotations.proto";
 
-option go_package = "github.com/Bridgeless-Project/tss-wrapper-svc/resources";
+option go_package = "github.com/Bridgeless-Project/tss-wrapper-svc/resources/types";
 
 enum ProcessStatus {
   PROCESS_STATUS_CREATED = 0;

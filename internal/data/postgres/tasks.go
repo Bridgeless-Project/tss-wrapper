@@ -4,7 +4,7 @@ import (
 	"time"
 
 	db "github.com/Bridgeless-Project/tss-wrapper-svc/internal/data"
-	types "github.com/Bridgeless-Project/tss-wrapper-svc/resources"
+	"github.com/Bridgeless-Project/tss-wrapper-svc/resources/types"
 	"github.com/Masterminds/squirrel"
 	"github.com/pkg/errors"
 	"gitlab.com/distributed_lab/kit/pgdb"
