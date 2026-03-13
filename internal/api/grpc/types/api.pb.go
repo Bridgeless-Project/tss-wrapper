@@ -26,9 +26,9 @@ const (
 
 type GetTasksRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Status        ProcessStatus          `protobuf:"varint,1,opt,name=status,proto3,enum=ProcessStatus" json:"status,omitempty"`
-	Pages         uint64                 `protobuf:"varint,2,opt,name=pages,proto3" json:"pages,omitempty"`
-	Limit         uint64                 `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
+	Status        *ProcessStatus         `protobuf:"varint,1,opt,name=status,proto3,enum=ProcessStatus,oneof" json:"status,omitempty"`
+	Offset        *uint64                `protobuf:"varint,2,opt,name=offset,proto3,oneof" json:"offset,omitempty"`
+	Limit         *uint64                `protobuf:"varint,3,opt,name=limit,proto3,oneof" json:"limit,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -64,22 +64,22 @@ func (*GetTasksRequest) Descriptor() ([]byte, []int) {
 }
 
 func (x *GetTasksRequest) GetStatus() ProcessStatus {
-	if x != nil {
-		return x.Status
+	if x != nil && x.Status != nil {
+		return *x.Status
 	}
 	return ProcessStatus_PROCESS_STATUS_CREATED
 }
 
-func (x *GetTasksRequest) GetPages() uint64 {
-	if x != nil {
-		return x.Pages
+func (x *GetTasksRequest) GetOffset() uint64 {
+	if x != nil && x.Offset != nil {
+		return *x.Offset
 	}
 	return 0
 }
 
 func (x *GetTasksRequest) GetLimit() uint64 {
-	if x != nil {
-		return x.Limit
+	if x != nil && x.Limit != nil {
+		return *x.Limit
 	}
 	return 0
 }
@@ -324,11 +324,14 @@ var File_api_proto protoreflect.FileDescriptor
 
 const file_api_proto_rawDesc = "" +
 	"\n" +
-	"\tapi.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x14gogoproto/gogo.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\vparty.proto\x1a\vconst.proto\"e\n" +
-	"\x0fGetTasksRequest\x12&\n" +
-	"\x06status\x18\x01 \x01(\x0e2\x0e.ProcessStatusR\x06status\x12\x14\n" +
-	"\x05pages\x18\x02 \x01(\x04R\x05pages\x12\x14\n" +
-	"\x05limit\x18\x03 \x01(\x04R\x05limit\"9\n" +
+	"\tapi.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x14gogoproto/gogo.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\vparty.proto\x1a\vconst.proto\"\x96\x01\n" +
+	"\x0fGetTasksRequest\x12+\n" +
+	"\x06status\x18\x01 \x01(\x0e2\x0e.ProcessStatusH\x00R\x06status\x88\x01\x01\x12\x1b\n" +
+	"\x06offset\x18\x02 \x01(\x04H\x01R\x06offset\x88\x01\x01\x12\x19\n" +
+	"\x05limit\x18\x03 \x01(\x04H\x02R\x05limit\x88\x01\x01B\t\n" +
+	"\a_statusB\t\n" +
+	"\a_offsetB\b\n" +
+	"\x06_limit\"9\n" +
 	"\x10GetTasksResponse\x12%\n" +
 	"\arecords\x18\x01 \x03(\v2\v.TaskRecordR\arecords\"E\n" +
 	"\x11UpdateDataRequest\x120\n" +
@@ -395,6 +398,7 @@ func file_api_proto_init() {
 	}
 	file_party_proto_init()
 	file_const_proto_init()
+	file_api_proto_msgTypes[0].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{

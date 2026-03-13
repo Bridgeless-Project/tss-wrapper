@@ -87,7 +87,7 @@
             "default": "PROCESS_STATUS_CREATED"
           },
           {
-            "name": "pages",
+            "name": "offset",
             "in": "query",
             "required": false,
             "type": "string",

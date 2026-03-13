@@ -30,9 +30,9 @@ service API{
 }
 
 message GetTasksRequest {
-  ProcessStatus status = 1;
-  uint64 pages = 2;
-  uint64 limit = 3;
+  optional ProcessStatus status = 1;
+  optional uint64 offset = 2;
+  optional uint64 limit = 3;
 }
 
 message GetTasksResponse {
