@@ -1,7 +1,9 @@
 package helpers
 
 import (
+	"fmt"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/types"
@@ -23,6 +25,11 @@ const (
 	keyTss              = "tss"
 	keyThreshold        = "threshold"
 	keyStartTime        = "start_time"
+	keyChainId          = "id"
+	keyPRC              = "rpc"
+	keyWallet           = "wallet"
+	keyHost             = "host"
+	keyBridgeAddress    = "bridge_address"
 )
 
 type ConfigManager struct {
@@ -153,8 +160,47 @@ func (c *ConfigManager) UpdateResharingParams(epoch uint32, startTime time.Time,
 	return nil
 }
 
+func (c *ConfigManager) GetResharingParties() ([]types.Party, error) {
+	resharingParams, ok := c.rawConfig[ResharingKey].(map[string]interface{})
+	if !ok {
+		return nil, errors.New("invalid resharing format")
+	}
+
+	partiesMap, ok := resharingParams[PartiesKey].(map[string]interface{})
+	if !ok {
+		return nil, errors.New("invalid parties format")
+	}
+
+	listSlice, ok := partiesMap[keyPartiesList].([]interface{})
+	if !ok {
+		return nil, errors.New("invalid parties list format")
+	}
+
+	var parties []types.Party
+	for _, item := range listSlice {
+		itemMap, ok := item.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		party := types.Party{}
+		if conn, ok := itemMap["connection"].(string); ok {
+			party.Connection = conn
+		}
+		if addr, ok := itemMap["core_address"].(string); ok {
+			party.CoreAddress = addr
+		}
+		if cert, ok := itemMap["tls_certificate_path"].(string); ok {
+			party.TLSCertificatePath = cert
+		}
+		parties = append(parties, party)
+	}
+
+	return parties, nil
+}
+
 // -------------------CHAINS-------------------
-func (c *ConfigManager) UpdateBitcoinWallet(address string, epoch uint32, chainType string) error {
+func (c *ConfigManager) UpdateBitcoinWallet(address string, epoch uint32, chainId string) error {
 	partiesMap, ok := c.rawConfig[keyChains].(map[string]interface{})
 	if !ok {
 		return errors.New("invalid chains format")
@@ -171,10 +217,16 @@ func (c *ConfigManager) UpdateBitcoinWallet(address string, epoch uint32, chainT
 			continue
 		}
 
-		if chainMap[keyChainType] == chainType {
-			chainMap["address"] = address
-			chainMap["epoch"] = epoch
+		if chainMap[keyChainId] != chainId {
+			continue
 		}
+
+		chainMap[keyBridgeAddress] = address
+		rpc := chainMap[keyPRC].(map[string]interface{})
+		wallet := rpc[keyWallet].(map[string]interface{})
+		host := wallet[keyHost].(string)
+		hostParts := strings.SplitAfter(host, "/wallet/")
+		wallet[keyHost] = fmt.Sprintf("%s/wallet/%d_%s", hostParts[0], epoch, address)
 	}
 
 	return nil
