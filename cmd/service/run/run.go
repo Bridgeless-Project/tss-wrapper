@@ -7,6 +7,7 @@ import (
 	"syscall"
 
 	"github.com/Bridgeless-Project/tss-wrapper-svc/cmd/utils"
+	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/api"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/config"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/core"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/core/observer"
@@ -74,6 +75,9 @@ func runService(ctx context.Context, cfg config.Config) error {
 		tasksDb,
 	)
 
+	apiServer := api.NewServer(cfg.GRPCListener(), cfg.HTTPListener(), tasksDb,
+		logger.WithField("component", "api-server"))
+
 	for _, eventCfg := range eventsConfig {
 		task, err := createTask(eventCfg.TaskType, cfg)
 		if err != nil {
@@ -108,6 +112,13 @@ func runService(ctx context.Context, cfg config.Config) error {
 
 	eg.Go(func() error {
 		return errors.Wrap(taskScheduler.Run(ctx), "error while running task scheduler")
+	})
+
+	eg.Go(func() error {
+		return errors.Wrap(apiServer.RunHTTP(ctx), "error while running API HTTP gateway")
+	})
+	eg.Go(func() error {
+		return errors.Wrap(apiServer.RunGRPC(ctx), "error while running API GRPC server")
 	})
 
 	return eg.Wait()
