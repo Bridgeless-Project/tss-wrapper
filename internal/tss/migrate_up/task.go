@@ -1,4 +1,4 @@
-package autoresharing
+package migrate_up
 
 import (
 	"context"
@@ -27,11 +27,10 @@ type Task struct {
 	StartTime  time.Time
 }
 
-func NewTask(tssconfig *config.TSSConfig, startTime time.Time) *Task {
+func NewTask(tssconfig *config.TSSConfig) *Task {
 	return &Task{
 		BinaryPath: tssconfig.BinaryPath,
 		ConfigPath: tssconfig.ConfigPath,
-		StartTime:  startTime,
 	}
 }
 
@@ -108,12 +107,13 @@ func (t *Task) UnmarshalData(data string) error {
 	return nil
 }
 
-func (t Task) Execute(ctx context.Context) error {
+func (t Task) Execute(ctx context.Context) (bool, error) {
 	if t.BinaryPath == "" {
-		return errors.New("binary path is not set")
+		return true, errors.New("binary path is not set")
 	}
 
 	args := []string{
+		"service",
 		"migrate",
 		"up",
 	}
@@ -122,5 +122,5 @@ func (t Task) Execute(ctx context.Context) error {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
-	return errors.Wrap(cmd.Run(), "failed to execute resharing task")
+	return true, errors.Wrap(cmd.Run(), "failed to execute resharing task")
 }

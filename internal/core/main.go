@@ -25,6 +25,8 @@ type Orchestrator struct {
 	apiCmd   *exec.Cmd
 	taskChan <-chan types.Task
 	tasksDb  db.TasksQ
+
+	prestartTasks []types.Task
 }
 
 func New(binaryPath, binaryParams, apiParams string, taskChan <-chan types.Task, logger *logan.Entry, tasksDb db.TasksQ) *Orchestrator {
@@ -36,6 +38,10 @@ func New(binaryPath, binaryParams, apiParams string, taskChan <-chan types.Task,
 		defaultArgs: strings.Split(binaryParams, " "),
 		apiParams:   strings.Split(apiParams, " "),
 	}
+}
+
+func (o *Orchestrator) WithPreStartTask(task types.Task) {
+	o.prestartTasks = append(o.prestartTasks, task)
 }
 
 func (o *Orchestrator) StartDefaultMode(ctx context.Context) error {
@@ -79,8 +85,29 @@ func (o *Orchestrator) Stop() error {
 	return nil
 }
 
+func (o *Orchestrator) launchPrestartTasks(ctx context.Context) error {
+	for _, task := range o.prestartTasks {
+		err := o.Stop()
+		if err != nil {
+			o.logger.WithError(err).Error("failed to stop prestart task")
+		}
+
+		_, err = task.Execute(ctx)
+		if err != nil {
+			return errors.Wrap(err, "failed to execute prestart task")
+		}
+	}
+
+	return nil
+}
+
 func (o *Orchestrator) Run(ctx context.Context) error {
-	if err := o.StartDefaultMode(ctx); err != nil {
+	err := o.launchPrestartTasks(ctx)
+	if err != nil {
+		return errors.Wrap(err, "failed to execute prestart tasks")
+	}
+
+	if err = o.StartDefaultMode(ctx); err != nil {
 		return err
 	}
 
@@ -88,7 +115,7 @@ func (o *Orchestrator) Run(ctx context.Context) error {
 		select {
 		case <-ctx.Done():
 			o.logger.Info("shutting down orchestrator")
-			if err := o.Stop(); err != nil {
+			if err := o.Stop(); err != nil { // ignore this error during shutdown, just log it
 				o.logger.WithError(err).Warn("failed to stop process during shutdown")
 			}
 			return nil
@@ -100,11 +127,18 @@ func (o *Orchestrator) Run(ctx context.Context) error {
 				WithField("task_type", fmt.Sprintf("%T", task)).
 				Info("executing task")
 
+			// This error appears only if process was stopped before, so we can just log it and continue
 			if err := o.Stop(); err != nil {
 				o.logger.WithError(err).Warn("failed to stop process before executing task")
-				// TODO: handle it
-				//o.updateTaskFailed(taskID, err)
-				//return errors.Wrap(err, "failed to stop process")
+			}
+
+			err := o.launchPrestartTasks(ctx)
+			if err != nil {
+				o.updateTaskFailed(taskID, err)
+				if err = o.StartDefaultMode(ctx); err != nil {
+					return errors.Wrap(err, "failed to restart default mode after task failure")
+				}
+				continue
 			}
 
 			o.logger.WithField("task_id", taskID).Info("stopped process before executing task")
@@ -130,7 +164,6 @@ func (o *Orchestrator) Run(ctx context.Context) error {
 				if err = o.apiCmd.Process.Signal(syscall.SIGTERM); err != nil {
 					return errors.Wrap(err, "failed to kill api process")
 				}
-				// TODO: handle zombi process
 			}
 
 			// Update task status to Completed

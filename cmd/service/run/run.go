@@ -14,6 +14,7 @@ import (
 	db "github.com/Bridgeless-Project/tss-wrapper-svc/internal/data"
 	pg "github.com/Bridgeless-Project/tss-wrapper-svc/internal/data/postgres"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/tss/autoresharing"
+	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/tss/migrate_up"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/tss/update"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/types"
 	pbTypes "github.com/Bridgeless-Project/tss-wrapper-svc/resources/types"
@@ -78,6 +79,10 @@ func runService(ctx context.Context, cfg config.Config) error {
 		task, err := createTask(eventCfg.TaskType, cfg)
 		if err != nil {
 			return errors.Wrap(err, fmt.Sprintf("failed to create task for event %s", eventCfg.Event))
+		}
+		if eventCfg.PreStart {
+			logger.Debugf("Adding task for event %s as pre-start task", eventCfg.Event)
+			orchestrator.WithPreStartTask(task)
 		}
 		eventObserver.WithEvent(eventCfg.Event, task)
 	}
@@ -168,6 +173,8 @@ func createTask(taskType config.TaskType, cfg config.Config) (types.Task, error)
 		), nil
 	case config.TaskTypeUpdate:
 		return update.NewTask(), nil
+	case config.TaskTypeMigrateUp:
+		return migrate_up.NewTask(cfg.TSSConfig()), nil
 	default:
 		return nil, fmt.Errorf("unknown task type: %s", taskType)
 	}
