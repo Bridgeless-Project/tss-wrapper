@@ -37,15 +37,16 @@ func (t Task) updateConfigBeforeResharing() error {
 	return errors.Wrap(configer.Save(), "failed to save config")
 }
 
-func (t Task) updateConfigAfterResharing(epoch *bridgetypes.Epoch, startTime time.Time, bridgeAddress string) error {
+func (t Task) updateConfigAfterResharing(epoch *bridgetypes.Epoch, startTime time.Time, utxoChains []bridgetypes.Chain) error {
 	configer := helpers.NewConfigManager(t.ConfigPath)
 	if err := configer.Load(); err != nil {
 		return errors.Wrap(err, "failed to load config")
 	}
 
-	// use map
-	if err := configer.UpdateBitcoinWallet(bridgeAddress, epoch.Id, "1"); err != nil {
-		return errors.Wrap(err, "failed to update bitcoin wallet")
+	for _, chain := range utxoChains {
+		if err := configer.UpdateBitcoinWallet(chain.BridgeAddress, epoch.Id, chain.Id); err != nil {
+			return errors.Wrap(err, "failed to update bitcoin wallet")
+		}
 	}
 
 	newParties, err := configer.GetResharingParties()

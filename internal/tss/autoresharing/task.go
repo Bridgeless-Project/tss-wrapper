@@ -195,34 +195,19 @@ func (t Task) Execute(ctx context.Context) (bool, error) {
 		)
 	}
 	var (
-		epochId       uint32
-		bridgeAddress string
-		epoch         *bridgetypes.Epoch
-		blockTime     time.Time
-		err           error
+		epochId    uint32
+		utxoChains []bridgetypes.Chain
+		epoch      *bridgetypes.Epoch
+		blockTime  time.Time
+		err        error
 	)
-
-	err = retry.Do(
-		func() error {
-			epochId, err = helpers.GetEpoch(ctx, t.GRPCCore)
-			if err != nil {
-				return err
-			}
-
-			if epochId != t.EpochId {
-				return errors.New("invalid epoch id")
-			}
-			return nil
-		},
-		opt...,
-	)
-	if err != nil {
-		return !isRevoked, errors.Wrap(err, "failed to wait updated epoch")
-	}
 
 	err = retry.Do(
 		func() error {
 			epoch, err = helpers.GetEpochState(ctx, epochId, t.GRPCCore)
+			if epoch.Status != bridgetypes.EpochStatus_RUNNING {
+				return errors.New("epoch is not running yet")
+			}
 			return err
 		},
 		opt...,
@@ -230,17 +215,6 @@ func (t Task) Execute(ctx context.Context) (bool, error) {
 
 	if err != nil {
 		return !isRevoked, errors.Wrap(err, "failed to get epoch state")
-	}
-
-	err = retry.Do(
-		func() error {
-			bridgeAddress, err = helpers.GetChainAddress(ctx, bridgetypes.ChainType_BITCOIN, t.GRPCCore)
-			return err
-		},
-		opt...,
-	)
-	if err != nil {
-		return !isRevoked, errors.Wrap(err, "failed to get bitcoin bridge address")
 	}
 
 	err = retry.Do(
@@ -259,12 +233,23 @@ func (t Task) Execute(ctx context.Context) (bool, error) {
 		return !isRevoked, errors.Wrap(err, "failed to get blocktime ")
 	}
 
+	err = retry.Do(
+		func() error {
+			utxoChains, err = helpers.GetChains(ctx, bridgetypes.ChainType_BITCOIN, t.GRPCCore)
+			return err
+		},
+		opt...,
+	)
+	if err != nil {
+		return !isRevoked, errors.Wrap(err, "failed to get bitcoin bridge address")
+	}
+
 	// do not change config if party is revoked, just return
 	if isRevoked {
 		return true, nil
 	}
 
-	return true, errors.Wrap(t.updateConfigAfterResharing(epoch, blockTime.Add(10*time.Minute), bridgeAddress), "failed to update config after start")
+	return true, errors.Wrap(t.updateConfigAfterResharing(epoch, blockTime.Add(10*time.Minute), utxoChains), "failed to update config after start")
 }
 
 func (t Task) isNewParty() bool {
