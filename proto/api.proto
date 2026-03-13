@@ -32,6 +32,8 @@ service API{
 
 message GetTasksRequest {
   ProcessStatus status = 1;
+  uint64 pages = 2;
+  uint64 limit = 3;
 }
 
 message GetTasksResponse {

@@ -85,6 +85,20 @@
               "PROCESS_STATUS_RETRY"
             ],
             "default": "PROCESS_STATUS_CREATED"
+          },
+          {
+            "name": "pages",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
           }
         ],
         "tags": [

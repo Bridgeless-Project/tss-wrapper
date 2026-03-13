@@ -27,6 +27,8 @@ const (
 type GetTasksRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Status        ProcessStatus          `protobuf:"varint,1,opt,name=status,proto3,enum=ProcessStatus" json:"status,omitempty"`
+	Pages         uint64                 `protobuf:"varint,2,opt,name=pages,proto3" json:"pages,omitempty"`
+	Limit         uint64                 `protobuf:"varint,3,opt,name=limit,proto3" json:"limit,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -66,6 +68,20 @@ func (x *GetTasksRequest) GetStatus() ProcessStatus {
 		return x.Status
 	}
 	return ProcessStatus_PROCESS_STATUS_CREATED
+}
+
+func (x *GetTasksRequest) GetPages() uint64 {
+	if x != nil {
+		return x.Pages
+	}
+	return 0
+}
+
+func (x *GetTasksRequest) GetLimit() uint64 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
 }
 
 type GetTasksResponse struct {
@@ -308,9 +324,11 @@ var File_api_proto protoreflect.FileDescriptor
 
 const file_api_proto_rawDesc = "" +
 	"\n" +
-	"\tapi.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x14gogoproto/gogo.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x11types/party.proto\x1a\x11types/const.proto\"9\n" +
+	"\tapi.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x14gogoproto/gogo.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x11types/party.proto\x1a\x11types/const.proto\"e\n" +
 	"\x0fGetTasksRequest\x12&\n" +
-	"\x06status\x18\x01 \x01(\x0e2\x0e.ProcessStatusR\x06status\"9\n" +
+	"\x06status\x18\x01 \x01(\x0e2\x0e.ProcessStatusR\x06status\x12\x14\n" +
+	"\x05pages\x18\x02 \x01(\x04R\x05pages\x12\x14\n" +
+	"\x05limit\x18\x03 \x01(\x04R\x05limit\"9\n" +
 	"\x10GetTasksResponse\x12%\n" +
 	"\arecords\x18\x01 \x03(\v2\v.TaskRecordR\arecords\"E\n" +
 	"\x11UpdateDataRequest\x120\n" +
