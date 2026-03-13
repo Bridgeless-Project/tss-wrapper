@@ -8,7 +8,6 @@ import (
 
 	"github.com/Bridgeless-Project/tss-wrapper-svc/cmd/utils"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/api"
-	pbTypes "github.com/Bridgeless-Project/tss-wrapper-svc/internal/api/grpc/types"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/config"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/core"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/core/observer"
@@ -18,6 +17,7 @@ import (
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/tss/autoresharing"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/tss/update"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/types"
+	pbTypes "github.com/Bridgeless-Project/tss-wrapper-svc/resources"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"gitlab.com/distributed_lab/logan/v3"

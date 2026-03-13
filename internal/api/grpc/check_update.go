@@ -3,7 +3,7 @@ package grpc
 import (
 	"context"
 
-	types2 "github.com/Bridgeless-Project/tss-wrapper-svc/internal/api/grpc/types"
+	types2 "github.com/Bridgeless-Project/tss-wrapper-svc/resources"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )

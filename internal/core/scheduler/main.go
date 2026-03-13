@@ -4,9 +4,9 @@ import (
 	"context"
 	"sync"
 
-	pbTypes "github.com/Bridgeless-Project/tss-wrapper-svc/internal/api/grpc/types"
 	db "github.com/Bridgeless-Project/tss-wrapper-svc/internal/data"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/types"
+	pbTypes "github.com/Bridgeless-Project/tss-wrapper-svc/resources"
 	"gitlab.com/distributed_lab/logan/v3"
 )
 

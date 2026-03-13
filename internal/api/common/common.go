@@ -1,8 +1,8 @@
 package common
 
 import (
-	grpcTypes "github.com/Bridgeless-Project/tss-wrapper-svc/internal/api/grpc/types"
 	db "github.com/Bridgeless-Project/tss-wrapper-svc/internal/data"
+	grpcTypes "github.com/Bridgeless-Project/tss-wrapper-svc/resources"
 	"gitlab.com/distributed_lab/kit/pgdb"
 )
 

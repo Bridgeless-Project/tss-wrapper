@@ -3,7 +3,7 @@ package db
 import (
 	"time"
 
-	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/api/grpc/types"
+	types "github.com/Bridgeless-Project/tss-wrapper-svc/resources"
 	"gitlab.com/distributed_lab/kit/pgdb"
 )
 

@@ -5,7 +5,7 @@ import (
 
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/api/common"
 	apiCtx "github.com/Bridgeless-Project/tss-wrapper-svc/internal/api/grpc/ctx"
-	types2 "github.com/Bridgeless-Project/tss-wrapper-svc/internal/api/grpc/types"
+	types2 "github.com/Bridgeless-Project/tss-wrapper-svc/resources"
 	"google.golang.org/grpc/status"
 
 	"google.golang.org/grpc/codes"
