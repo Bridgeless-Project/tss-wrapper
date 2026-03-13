@@ -161,14 +161,17 @@ func (t *Task) UnmarshalData(data string) error {
 	return nil
 }
 
-func (t Task) Execute(ctx context.Context) error {
+func (t Task) Execute(ctx context.Context) (bool, error) {
+	isRevoked := t.isRevokedParty()
 	if t.BinaryPath == "" {
-		return errors.New("binary path is not set")
+		return !isRevoked, errors.New("binary path is not set")
 	}
 
+	fmt.Println("Update resharing params")
 	if err := t.updateConfigBeforeResharing(); err != nil {
-		return errors.Wrap(err, "failed to update parties config")
+		return !isRevoked, errors.Wrap(err, "failed to update parties config")
 	}
+	fmt.Println("Start resharing")
 
 	args := []string{
 		"service",
@@ -183,9 +186,15 @@ func (t Task) Execute(ctx context.Context) error {
 	cmd.Stderr = os.Stderr
 
 	if err := cmd.Run(); err != nil {
-		return errors.Wrap(err, "failed to execute resharing task")
+		return !isRevoked, errors.Wrap(err, "failed to execute resharing task")
 	}
-
+	opt := make([]retry.Option, 0)
+	if t.isNewParty() {
+		opt = append(opt,
+			retry.Delay(1*time.Minute),
+			retry.Attempts(120),
+		)
+	}
 	var (
 		epochId       uint32
 		bridgeAddress string
@@ -206,19 +215,22 @@ func (t Task) Execute(ctx context.Context) error {
 			}
 			return nil
 		},
+		opt...,
 	)
 	if err != nil {
-		return errors.Wrap(err, "failed to wait updated epoch")
+		return !isRevoked, errors.Wrap(err, "failed to wait updated epoch")
 	}
 
 	err = retry.Do(
 		func() error {
 			epoch, err = helpers.GetEpochState(ctx, epochId, t.GRPCCore)
 			return err
-		})
+		},
+		opt...,
+	)
 
 	if err != nil {
-		return errors.Wrap(err, "failed to get epoch state")
+		return !isRevoked, errors.Wrap(err, "failed to get epoch state")
 	}
 
 	err = retry.Do(
@@ -226,9 +238,10 @@ func (t Task) Execute(ctx context.Context) error {
 			bridgeAddress, err = helpers.GetChainAddress(ctx, bridgetypes.ChainType_BITCOIN, t.GRPCCore)
 			return err
 		},
+		opt...,
 	)
 	if err != nil {
-		return errors.Wrap(err, "failed to get bitcoin bridge address")
+		return !isRevoked, errors.Wrap(err, "failed to get bitcoin bridge address")
 	}
 
 	err = retry.Do(
@@ -241,12 +254,18 @@ func (t Task) Execute(ctx context.Context) error {
 			blockTime = block.Block.Time
 			return nil
 		},
+		opt...,
 	)
 	if err != nil {
-		return errors.Wrap(err, "failed to get blocktime ")
+		return !isRevoked, errors.Wrap(err, "failed to get blocktime ")
 	}
 
-	return errors.Wrap(t.updateConfigAfterResharing(epoch, blockTime.Add(time.Hour), bridgeAddress), "failed to update config after start")
+	// do not change config if party is revoked, just return
+	if isRevoked {
+		return true, nil
+	}
+
+	return true, errors.Wrap(t.updateConfigAfterResharing(epoch, blockTime.Add(10*time.Minute), bridgeAddress), "failed to update config after start")
 }
 
 func (t Task) updateConfigBeforeResharing() error {
@@ -265,7 +284,7 @@ func (t Task) updateConfigBeforeResharing() error {
 		return errors.Wrap(err, "failed to determine parties config")
 	}
 
-	err = configer.UpdateResharingParams(t.EpochId, t.StartTime, t.isNewParty(), t.Threshold, newParties)
+	err = configer.UpdateResharingParams(t.EpochId, t.StartTime.Add(10*time.Second), t.isNewParty(), t.Threshold, newParties)
 	if err != nil {
 		return errors.Wrap(err, "failed to update parties config")
 	}
@@ -279,11 +298,12 @@ func (t Task) updateConfigAfterResharing(epoch *bridgetypes.Epoch, startTime tim
 		return errors.Wrap(err, "failed to load config")
 	}
 
-	if err := configer.UpdateBitcoinWallet(bridgeAddress, epoch.Id, "bitcoin"); err != nil {
+	// use map
+	if err := configer.UpdateBitcoinWallet(bridgeAddress, epoch.Id, "1"); err != nil {
 		return errors.Wrap(err, "failed to update bitcoin wallet")
 	}
 
-	newParties, err := configer.GetParties(helpers.PartiesKey)
+	newParties, err := configer.GetResharingParties()
 	if err != nil {
 		return errors.Wrap(err, "failed to get new parties")
 	}
@@ -308,6 +328,9 @@ func (t Task) determinePartiesConfig(currentParties []types.Party) ([]types.Part
 
 	for _, tssInfo := range t.TssInfo {
 		if tssInfo.Active {
+			if tssInfo.Address == t.CoreAddress {
+				continue
+			}
 			certPath, err := t.storeCertificate(tssInfo.Domen, tssInfo.Certificate)
 			if err != nil {
 				return nil, errors.Wrap(err, fmt.Sprintf("failed to store certificate for %s", tssInfo.Domen))
@@ -368,5 +391,14 @@ func (t Task) isNewParty() bool {
 		}
 	}
 
+	return false
+}
+
+func (t Task) isRevokedParty() bool {
+	for _, info := range t.TssInfo {
+		if info.Address == t.CoreAddress {
+			return !info.Active
+		}
+	}
 	return false
 }

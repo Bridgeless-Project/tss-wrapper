@@ -10,10 +10,10 @@ type Task interface {
 	GetTime() time.Time
 	GetTaskType() string
 	GetName() string
-	
+
 	SetID(id int64)
 
-	Execute(ctx context.Context) error
+	Execute(ctx context.Context) (bool, error)
 	Parse(attributes []Attribute) (Task, error)
 	StartScheduling(ctx context.Context, c chan<- Task)
 
