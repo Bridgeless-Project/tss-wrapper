@@ -3,6 +3,7 @@ package grpc
 import (
 	"context"
 
+	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/api/common"
 	apiCtx "github.com/Bridgeless-Project/tss-wrapper-svc/internal/api/grpc/ctx"
 	types2 "github.com/Bridgeless-Project/tss-wrapper-svc/resources"
 	"google.golang.org/grpc/status"
@@ -10,11 +11,16 @@ import (
 	"google.golang.org/grpc/codes"
 )
 
-func (i Implementation) GetTasks(ctx context.Context, identifier *types2.GetTasksRequest) (*types2.GetTasksResponse, error) {
+func (i Implementation) GetTasks(ctx context.Context, request *types2.GetTasksRequest) (*types2.GetTasksResponse, error) {
 	var (
-		_ = apiCtx.Logger(ctx)
-		_ = apiCtx.DB(ctx)
+		logger = apiCtx.Logger(ctx)
+		db     = apiCtx.DB(ctx)
 	)
-	return nil, status.Error(codes.Unimplemented, "not implemented")
+	tasks, err := db.FilterByStatus(request.GetStatus()).Get()
+	if err != nil {
+		logger.WithError(err).Error("failed to fetch task data from db")
+		return nil, status.Error(codes.Internal, "failed to get task details")
+	}
+	return common.ToGetTasksResponse(tasks), nil
 
 }
