@@ -27,6 +27,19 @@ service API{
       get: "/get_tasks"
     };
   }
+  rpc UpdateTime(UpdateTimeRequest) returns (UpdateTimeResponse) {
+    option (google.api.http) = {
+      get: "/config/time"
+    };
+  }
+}
+
+message UpdateTimeRequest {
+  uint64 timestamp = 1;
+}
+
+message UpdateTimeResponse {
+  bool result = 1;
 }
 
 message GetTasksRequest {
