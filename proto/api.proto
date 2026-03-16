@@ -35,7 +35,7 @@ service API{
 }
 
 message UpdateTimeRequest {
-  uint64 timestamp = 1;
+  int64 timestamp = 1;
 }
 
 message UpdateTimeResponse {
