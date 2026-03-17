@@ -21,6 +21,7 @@ const _ = grpc.SupportPackageIsVersion9
 const (
 	API_CheckUpdate_FullMethodName = "/API/CheckUpdate"
 	API_GetTasks_FullMethodName    = "/API/GetTasks"
+	API_UpdateTime_FullMethodName  = "/API/UpdateTime"
 )
 
 // APIClient is the client API for API service.
@@ -29,6 +30,7 @@ const (
 type APIClient interface {
 	CheckUpdate(ctx context.Context, in *CheckUpdateRequest, opts ...grpc.CallOption) (*CheckUpdateResponse, error)
 	GetTasks(ctx context.Context, in *GetTasksRequest, opts ...grpc.CallOption) (*GetTasksResponse, error)
+	UpdateTime(ctx context.Context, in *UpdateTimeRequest, opts ...grpc.CallOption) (*UpdateTimeResponse, error)
 }
 
 type aPIClient struct {
@@ -59,12 +61,23 @@ func (c *aPIClient) GetTasks(ctx context.Context, in *GetTasksRequest, opts ...g
 	return out, nil
 }
 
+func (c *aPIClient) UpdateTime(ctx context.Context, in *UpdateTimeRequest, opts ...grpc.CallOption) (*UpdateTimeResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateTimeResponse)
+	err := c.cc.Invoke(ctx, API_UpdateTime_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // APIServer is the server API for API service.
 // All implementations should embed UnimplementedAPIServer
 // for forward compatibility.
 type APIServer interface {
 	CheckUpdate(context.Context, *CheckUpdateRequest) (*CheckUpdateResponse, error)
 	GetTasks(context.Context, *GetTasksRequest) (*GetTasksResponse, error)
+	UpdateTime(context.Context, *UpdateTimeRequest) (*UpdateTimeResponse, error)
 }
 
 // UnimplementedAPIServer should be embedded to have
@@ -79,6 +92,9 @@ func (UnimplementedAPIServer) CheckUpdate(context.Context, *CheckUpdateRequest) 
 }
 func (UnimplementedAPIServer) GetTasks(context.Context, *GetTasksRequest) (*GetTasksResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetTasks not implemented")
+}
+func (UnimplementedAPIServer) UpdateTime(context.Context, *UpdateTimeRequest) (*UpdateTimeResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method UpdateTime not implemented")
 }
 func (UnimplementedAPIServer) testEmbeddedByValue() {}
 
@@ -136,6 +152,24 @@ func _API_GetTasks_Handler(srv interface{}, ctx context.Context, dec func(interf
 	return interceptor(ctx, in, info, handler)
 }
 
+func _API_UpdateTime_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateTimeRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(APIServer).UpdateTime(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: API_UpdateTime_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(APIServer).UpdateTime(ctx, req.(*UpdateTimeRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // API_ServiceDesc is the grpc.ServiceDesc for API service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -150,6 +184,10 @@ var API_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetTasks",
 			Handler:    _API_GetTasks_Handler,
+		},
+		{
+			MethodName: "UpdateTime",
+			Handler:    _API_UpdateTime_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

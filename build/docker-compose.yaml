@@ -4,12 +4,12 @@ services:
     image: postgres
     restart: unless-stopped
     ports:
-      - "5432:5432"
+      - "5435:5432"
     environment:
       - POSTGRES_USER=tss-wrapper
       - POSTGRES_PASSWORD=tss-wrapper
       - POSTGRES_DB=db
-      - PGDATA=/
+      - PGDATA=/pgdata
     volumes:
       - pg-data:/pgdata
     healthcheck:

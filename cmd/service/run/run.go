@@ -80,6 +80,7 @@ func runService(ctx context.Context, cfg config.Config) error {
 		cfg.HTTPListener(),
 		tasksDb,
 		logger.WithField("component", "server"),
+		taskScheduler,
 	)
 
 	for _, eventCfg := range eventsConfig {

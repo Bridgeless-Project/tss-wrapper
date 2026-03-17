@@ -45,7 +45,12 @@ func GetPaginationSettings(limitPtr *uint64, offsetPtr *uint64) pgdb.OffsetPageP
 	return pgdb.OffsetPageParams{Limit: limit, PageNumber: offset}
 }
 
+func ToUpdateTimeResponse(status bool) *resources.UpdateTimeResponse {
+	return &resources.UpdateTimeResponse{Result: status}
+}
+
 const (
-	DefaultLimit  = 15
-	DefaultOffset = 0
+	DefaultLimit         = 15
+	DefaultOffset        = 0
+	DefaultExecutionTime = 10
 )

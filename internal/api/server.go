@@ -3,6 +3,7 @@ package api
 import (
 	"context"
 	"errors"
+	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/core/scheduler"
 	"net"
 	"net/http"
 	"time"
@@ -37,6 +38,7 @@ func NewServer(
 	http net.Listener,
 	tasksDB db.TasksQ,
 	logger *logan.Entry,
+	scheduler *scheduler.Scheduler,
 ) *Server {
 	return &Server{
 		grpc:   grpc,
@@ -46,6 +48,7 @@ func NewServer(
 		ctxExtenders: []func(context.Context) context.Context{
 			ctx.LoggerProvider(logger),
 			ctx.DBProvider(tasksDB),
+			ctx.SchedulerProvider(scheduler),
 		},
 	}
 }

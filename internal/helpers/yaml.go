@@ -160,6 +160,16 @@ func (c *ConfigManager) UpdateResharingParams(epoch uint32, startTime time.Time,
 	return nil
 }
 
+func (c *ConfigManager) UpdateResharingTime(startTime time.Time) error {
+	resharingParamsMap, ok := c.rawConfig[ResharingKey].(map[string]interface{})
+	if !ok {
+		resharingParamsMap = make(map[string]interface{})
+		c.rawConfig[ResharingKey] = resharingParamsMap
+	}
+	resharingParamsMap[keyStartTime] = startTime
+	return nil
+}
+
 func (c *ConfigManager) GetResharingParties() ([]types.Party, error) {
 	resharingParams, ok := c.rawConfig[ResharingKey].(map[string]interface{})
 	if !ok {
