@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/config"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/helpers"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/types"
 	"github.com/pkg/errors"
@@ -24,13 +25,21 @@ type Task struct {
 	StartTime  time.Time
 }
 
-func NewTask() *Task {
-	return &Task{}
+func NewTask(tssconfig *config.TSSConfig) *Task {
+	return &Task{ConfigPath: tssconfig.ConfigPath}
 }
 
 func (t Task) Execute(ctx context.Context) (bool, error) {
 	configer := helpers.NewConfigManager(t.ConfigPath)
-	err := configer.UpdateResharingTime(t.StartTime)
+	err := configer.Load()
+	if err != nil {
+		return false, err
+	}
+	err = configer.UpdateResharingTime(t.StartTime)
+	if err != nil {
+		return false, err
+	}
+	err = configer.Save()
 	if err != nil {
 		return false, err
 	}
@@ -53,19 +62,8 @@ func (t Task) Parse(attributes []types.Attribute) (types.Task, error) {
 }
 
 func (t Task) StartScheduling(ctx context.Context, taskChan chan<- types.Task) {
-	delay := time.Until(t.StartTime)
-	if delay <= 0 {
-		taskChan <- &t
-		return
-	}
-	timer := time.NewTimer(delay)
-	defer timer.Stop()
-	select {
-	case <-ctx.Done():
-		return
-	case <-timer.C:
-		taskChan <- &t
-	}
+	taskChan <- &t
+	return
 }
 
 func (t Task) GetName() string {

@@ -29,7 +29,8 @@ service API{
   }
   rpc UpdateTime(UpdateTimeRequest) returns (UpdateTimeResponse) {
     option (google.api.http) = {
-      get: "/config/time"
+      post: "/config/time",
+      body: "*"
     };
   }
 }

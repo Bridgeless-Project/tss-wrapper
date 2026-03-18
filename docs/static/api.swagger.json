@@ -54,7 +54,7 @@
       }
     },
     "/config/time": {
-      "get": {
+      "post": {
         "operationId": "API_UpdateTime",
         "responses": {
           "200": {
@@ -72,11 +72,12 @@
         },
         "parameters": [
           {
-            "name": "timestamp",
-            "in": "query",
-            "required": false,
-            "type": "string",
-            "format": "int64"
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateTimeRequest"
+            }
           }
         ],
         "tags": [
@@ -193,6 +194,15 @@
         },
         "error": {
           "type": "string"
+        }
+      }
+    },
+    "UpdateTimeRequest": {
+      "type": "object",
+      "properties": {
+        "timestamp": {
+          "type": "string",
+          "format": "int64"
         }
       }
     },
