@@ -27,7 +27,8 @@ const (
 
 type UpdateTimeRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Timestamp     int64                  `protobuf:"varint,1,opt,name=timestamp,proto3" json:"timestamp,omitempty"`
+	StartTime     int64                  `protobuf:"varint,1,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
+	TargetTime    int64                  `protobuf:"varint,2,opt,name=target_time,json=targetTime,proto3" json:"target_time,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -62,9 +63,16 @@ func (*UpdateTimeRequest) Descriptor() ([]byte, []int) {
 	return file_api_proto_rawDescGZIP(), []int{0}
 }
 
-func (x *UpdateTimeRequest) GetTimestamp() int64 {
+func (x *UpdateTimeRequest) GetStartTime() int64 {
 	if x != nil {
-		return x.Timestamp
+		return x.StartTime
+	}
+	return 0
+}
+
+func (x *UpdateTimeRequest) GetTargetTime() int64 {
+	if x != nil {
+		return x.TargetTime
 	}
 	return 0
 }
@@ -413,9 +421,12 @@ var File_api_proto protoreflect.FileDescriptor
 
 const file_api_proto_rawDesc = "" +
 	"\n" +
-	"\tapi.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x14gogoproto/gogo.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x11types/party.proto\x1a\x11types/const.proto\"1\n" +
-	"\x11UpdateTimeRequest\x12\x1c\n" +
-	"\ttimestamp\x18\x01 \x01(\x03R\ttimestamp\",\n" +
+	"\tapi.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x14gogoproto/gogo.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x11types/party.proto\x1a\x11types/const.proto\"S\n" +
+	"\x11UpdateTimeRequest\x12\x1d\n" +
+	"\n" +
+	"start_time\x18\x01 \x01(\x03R\tstartTime\x12\x1f\n" +
+	"\vtarget_time\x18\x02 \x01(\x03R\n" +
+	"targetTime\",\n" +
 	"\x12UpdateTimeResponse\x12\x16\n" +
 	"\x06result\x18\x01 \x01(\bR\x06result\"\x96\x01\n" +
 	"\x0fGetTasksRequest\x12+\n" +

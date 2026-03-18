@@ -16,13 +16,15 @@ const TaskType = "timechanger"
 
 // taskData represents the serializable part of the task for database storage
 type taskData struct {
-	StartTime int64 `json:"start_time"`
+	StartTime  int64 `json:"start_time"`
+	TargetTime int64 `json:"target_time"`
 }
 
 type Task struct {
 	id         int64 // database ID
 	ConfigPath string
 	StartTime  time.Time
+	TargetTime time.Time
 }
 
 func NewTask(tssconfig *config.TSSConfig) *Task {
@@ -35,7 +37,7 @@ func (t Task) Execute(ctx context.Context) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	err = configer.UpdateResharingTime(t.StartTime)
+	err = configer.UpdateResharingTime(t.TargetTime)
 	if err != nil {
 		return false, err
 	}
@@ -62,8 +64,20 @@ func (t Task) Parse(attributes []types.Attribute) (types.Task, error) {
 }
 
 func (t Task) StartScheduling(ctx context.Context, taskChan chan<- types.Task) {
-	taskChan <- &t
-	return
+	delay := time.Until(t.StartTime)
+	if delay <= 0 {
+		taskChan <- &t
+		return
+	}
+	timer := time.NewTimer(delay)
+	defer timer.Stop()
+
+	select {
+	case <-ctx.Done():
+		return
+	case <-timer.C:
+		taskChan <- &t
+	}
 }
 
 func (t Task) GetName() string {

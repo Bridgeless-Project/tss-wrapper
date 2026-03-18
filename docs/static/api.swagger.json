@@ -200,7 +200,11 @@
     "UpdateTimeRequest": {
       "type": "object",
       "properties": {
-        "timestamp": {
+        "startTime": {
+          "type": "string",
+          "format": "int64"
+        },
+        "targetTime": {
           "type": "string",
           "format": "int64"
         }

@@ -36,7 +36,8 @@ service API{
 }
 
 message UpdateTimeRequest {
-  int64 timestamp = 1;
+  int64 start_time = 1;
+  int64 target_time = 2;
 }
 
 message UpdateTimeResponse {
