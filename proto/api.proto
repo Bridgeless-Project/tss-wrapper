@@ -35,12 +35,6 @@ service API{
   }
 }
 
-message GetTasksRequest {
-  optional ProcessStatus status = 1;
-  optional uint64 offset = 2;
-  optional uint64 limit = 3;
-}
-
 message UpdateTimeRequest {
   int64 start_time = 1;
   int64 target_time = 2;
@@ -56,9 +50,6 @@ message GetTasksRequest {
   optional uint64 limit = 3;
 }
 
-message GetTasksResponse {
-  repeated TaskRecord records = 1;
-}
 message GetTasksResponse {
   repeated TaskRecord records = 1;
 }

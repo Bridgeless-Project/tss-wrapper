@@ -20,8 +20,8 @@ const _ = grpc.SupportPackageIsVersion9
 
 const (
 	API_CheckUpdate_FullMethodName = "/API/CheckUpdate"
-	API_GetTasks_FullMethodName    = "/API/GetTasks"
 	API_UpdateTime_FullMethodName  = "/API/UpdateTime"
+	API_GetTasks_FullMethodName    = "/API/GetTasks"
 )
 
 // APIClient is the client API for API service.
@@ -29,8 +29,8 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type APIClient interface {
 	CheckUpdate(ctx context.Context, in *CheckUpdateRequest, opts ...grpc.CallOption) (*CheckUpdateResponse, error)
-	GetTasks(ctx context.Context, in *GetTasksRequest, opts ...grpc.CallOption) (*GetTasksResponse, error)
 	UpdateTime(ctx context.Context, in *UpdateTimeRequest, opts ...grpc.CallOption) (*UpdateTimeResponse, error)
+	GetTasks(ctx context.Context, in *GetTasksRequest, opts ...grpc.CallOption) (*GetTasksResponse, error)
 }
 
 type aPIClient struct {
@@ -51,20 +51,20 @@ func (c *aPIClient) CheckUpdate(ctx context.Context, in *CheckUpdateRequest, opt
 	return out, nil
 }
 
-func (c *aPIClient) GetTasks(ctx context.Context, in *GetTasksRequest, opts ...grpc.CallOption) (*GetTasksResponse, error) {
+func (c *aPIClient) UpdateTime(ctx context.Context, in *UpdateTimeRequest, opts ...grpc.CallOption) (*UpdateTimeResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(GetTasksResponse)
-	err := c.cc.Invoke(ctx, API_GetTasks_FullMethodName, in, out, cOpts...)
+	out := new(UpdateTimeResponse)
+	err := c.cc.Invoke(ctx, API_UpdateTime_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
 	return out, nil
 }
 
-func (c *aPIClient) UpdateTime(ctx context.Context, in *UpdateTimeRequest, opts ...grpc.CallOption) (*UpdateTimeResponse, error) {
+func (c *aPIClient) GetTasks(ctx context.Context, in *GetTasksRequest, opts ...grpc.CallOption) (*GetTasksResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
-	out := new(UpdateTimeResponse)
-	err := c.cc.Invoke(ctx, API_UpdateTime_FullMethodName, in, out, cOpts...)
+	out := new(GetTasksResponse)
+	err := c.cc.Invoke(ctx, API_GetTasks_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -76,8 +76,8 @@ func (c *aPIClient) UpdateTime(ctx context.Context, in *UpdateTimeRequest, opts 
 // for forward compatibility.
 type APIServer interface {
 	CheckUpdate(context.Context, *CheckUpdateRequest) (*CheckUpdateResponse, error)
-	GetTasks(context.Context, *GetTasksRequest) (*GetTasksResponse, error)
 	UpdateTime(context.Context, *UpdateTimeRequest) (*UpdateTimeResponse, error)
+	GetTasks(context.Context, *GetTasksRequest) (*GetTasksResponse, error)
 }
 
 // UnimplementedAPIServer should be embedded to have
@@ -90,11 +90,11 @@ type UnimplementedAPIServer struct{}
 func (UnimplementedAPIServer) CheckUpdate(context.Context, *CheckUpdateRequest) (*CheckUpdateResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CheckUpdate not implemented")
 }
-func (UnimplementedAPIServer) GetTasks(context.Context, *GetTasksRequest) (*GetTasksResponse, error) {
-	return nil, status.Error(codes.Unimplemented, "method GetTasks not implemented")
-}
 func (UnimplementedAPIServer) UpdateTime(context.Context, *UpdateTimeRequest) (*UpdateTimeResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method UpdateTime not implemented")
+}
+func (UnimplementedAPIServer) GetTasks(context.Context, *GetTasksRequest) (*GetTasksResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetTasks not implemented")
 }
 func (UnimplementedAPIServer) testEmbeddedByValue() {}
 
@@ -134,24 +134,6 @@ func _API_CheckUpdate_Handler(srv interface{}, ctx context.Context, dec func(int
 	return interceptor(ctx, in, info, handler)
 }
 
-func _API_GetTasks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
-	in := new(GetTasksRequest)
-	if err := dec(in); err != nil {
-		return nil, err
-	}
-	if interceptor == nil {
-		return srv.(APIServer).GetTasks(ctx, in)
-	}
-	info := &grpc.UnaryServerInfo{
-		Server:     srv,
-		FullMethod: API_GetTasks_FullMethodName,
-	}
-	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
-		return srv.(APIServer).GetTasks(ctx, req.(*GetTasksRequest))
-	}
-	return interceptor(ctx, in, info, handler)
-}
-
 func _API_UpdateTime_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(UpdateTimeRequest)
 	if err := dec(in); err != nil {
@@ -170,6 +152,24 @@ func _API_UpdateTime_Handler(srv interface{}, ctx context.Context, dec func(inte
 	return interceptor(ctx, in, info, handler)
 }
 
+func _API_GetTasks_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetTasksRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(APIServer).GetTasks(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: API_GetTasks_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(APIServer).GetTasks(ctx, req.(*GetTasksRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // API_ServiceDesc is the grpc.ServiceDesc for API service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -182,12 +182,12 @@ var API_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _API_CheckUpdate_Handler,
 		},
 		{
-			MethodName: "GetTasks",
-			Handler:    _API_GetTasks_Handler,
-		},
-		{
 			MethodName: "UpdateTime",
 			Handler:    _API_UpdateTime_Handler,
+		},
+		{
+			MethodName: "GetTasks",
+			Handler:    _API_GetTasks_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
