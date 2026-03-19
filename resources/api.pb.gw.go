@@ -155,7 +155,7 @@ func RegisterAPIHandlerServer(ctx context.Context, mux *runtime.ServeMux, server
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.API/GetTasks", runtime.WithHTTPPathPattern("/get_tasks"))
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.API/GetTasks", runtime.WithHTTPPathPattern("/tasks"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -230,7 +230,7 @@ func RegisterAPIHandlerClient(ctx context.Context, mux *runtime.ServeMux, client
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
-		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/.API/GetTasks", runtime.WithHTTPPathPattern("/get_tasks"))
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/.API/GetTasks", runtime.WithHTTPPathPattern("/tasks"))
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -248,7 +248,7 @@ func RegisterAPIHandlerClient(ctx context.Context, mux *runtime.ServeMux, client
 
 var (
 	pattern_API_CheckUpdate_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1}, []string{"check", "epoch"}, ""))
-	pattern_API_GetTasks_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"get_tasks"}, ""))
+	pattern_API_GetTasks_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"tasks"}, ""))
 )
 
 var (

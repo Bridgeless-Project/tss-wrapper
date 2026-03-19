@@ -24,7 +24,7 @@ service API{
   }
   rpc GetTasks(GetTasksRequest) returns (GetTasksResponse) {
     option (google.api.http) = {
-      get: "/get_tasks"
+      get: "/tasks"
     };
   }
 }

@@ -345,11 +345,10 @@ const file_api_proto_rawDesc = "" +
 	"\x13CheckUpdateResponse\x12\x1f\n" +
 	"\vupdate_time\x18\x01 \x01(\x04R\n" +
 	"updateTime\x12#\n" +
-	"\rupdate_number\x18\x02 \x01(\tR\fupdateNumber2\x9c\x01\n" +
+	"\rupdate_number\x18\x02 \x01(\tR\fupdateNumber2\x98\x01\n" +
 	"\x03API\x12P\n" +
-	"\vCheckUpdate\x12\x13.CheckUpdateRequest\x1a\x14.CheckUpdateResponse\"\x16\x82\xd3\xe4\x93\x02\x10\x12\x0e/check/{epoch}\x12C\n" +
-	"\bGetTasks\x12\x10.GetTasksRequest\x1a\x11.GetTasksResponse\"\x12\x82\xd3\xe4\x93\x02\f\x12\n" +
-	"/get_tasksBZ\x92A\x1e\x12\x1c\n" +
+	"\vCheckUpdate\x12\x13.CheckUpdateRequest\x1a\x14.CheckUpdateResponse\"\x16\x82\xd3\xe4\x93\x02\x10\x12\x0e/check/{epoch}\x12?\n" +
+	"\bGetTasks\x12\x10.GetTasksRequest\x1a\x11.GetTasksResponse\"\x0e\x82\xd3\xe4\x93\x02\b\x12\x06/tasksBZ\x92A\x1e\x12\x1c\n" +
 	"\x13TSS-wrapper-svc API2\x050.1.0Z7github.com/Bridgeless-Project/tss-wrapper-svc/resourcesb\x06proto3"
 
 var (
