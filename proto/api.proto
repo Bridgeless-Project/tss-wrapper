@@ -22,17 +22,23 @@ service API{
       get: "/check/{epoch}"
     };
   }
-  rpc GetTasks(GetTasksRequest) returns (GetTasksResponse) {
-    option (google.api.http) = {
-      get: "/get_tasks"
-    };
-  }
   rpc UpdateTime(UpdateTimeRequest) returns (UpdateTimeResponse) {
     option (google.api.http) = {
       post: "/config/time",
       body: "*"
     };
   }
+  rpc GetTasks(GetTasksRequest) returns (GetTasksResponse) {
+    option (google.api.http) = {
+      get: "/tasks"
+    };
+  }
+}
+
+message GetTasksRequest {
+  optional ProcessStatus status = 1;
+  optional uint64 offset = 2;
+  optional uint64 limit = 3;
 }
 
 message UpdateTimeRequest {
@@ -50,6 +56,9 @@ message GetTasksRequest {
   optional uint64 limit = 3;
 }
 
+message GetTasksResponse {
+  repeated TaskRecord records = 1;
+}
 message GetTasksResponse {
   repeated TaskRecord records = 1;
 }

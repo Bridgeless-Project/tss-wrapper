@@ -123,6 +123,7 @@ func local_request_API_GetTasks_0(ctx context.Context, marshaler runtime.Marshal
 	return msg, metadata, err
 }
 
+<<<<<<< HEAD
 func request_API_UpdateTime_0(ctx context.Context, marshaler runtime.Marshaler, client APIClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
 	var (
 		protoReq UpdateTimeRequest
@@ -150,6 +151,8 @@ func local_request_API_UpdateTime_0(ctx context.Context, marshaler runtime.Marsh
 	return msg, metadata, err
 }
 
+=======
+>>>>>>> dev
 // RegisterAPIHandlerServer registers the http handlers for service API to "mux".
 // UnaryRPC     :call APIServer directly.
 // StreamingRPC :currently unsupported pending https://github.com/grpc/grpc-go/issues/906.
@@ -182,7 +185,11 @@ func RegisterAPIHandlerServer(ctx context.Context, mux *runtime.ServeMux, server
 		var stream runtime.ServerTransportStream
 		ctx = grpc.NewContextWithServerTransportStream(ctx, &stream)
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+<<<<<<< HEAD
 		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.API/GetTasks", runtime.WithHTTPPathPattern("/get_tasks"))
+=======
+		annotatedContext, err := runtime.AnnotateIncomingContext(ctx, mux, req, "/.API/GetTasks", runtime.WithHTTPPathPattern("/tasks"))
+>>>>>>> dev
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -196,6 +203,7 @@ func RegisterAPIHandlerServer(ctx context.Context, mux *runtime.ServeMux, server
 		}
 		forward_API_GetTasks_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
+<<<<<<< HEAD
 	mux.Handle(http.MethodPost, pattern_API_UpdateTime_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
@@ -216,6 +224,8 @@ func RegisterAPIHandlerServer(ctx context.Context, mux *runtime.ServeMux, server
 		}
 		forward_API_UpdateTime_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
+=======
+>>>>>>> dev
 
 	return nil
 }
@@ -277,7 +287,11 @@ func RegisterAPIHandlerClient(ctx context.Context, mux *runtime.ServeMux, client
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
 		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+<<<<<<< HEAD
 		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/.API/GetTasks", runtime.WithHTTPPathPattern("/get_tasks"))
+=======
+		annotatedContext, err := runtime.AnnotateContext(ctx, mux, req, "/.API/GetTasks", runtime.WithHTTPPathPattern("/tasks"))
+>>>>>>> dev
 		if err != nil {
 			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
 			return
@@ -290,6 +304,7 @@ func RegisterAPIHandlerClient(ctx context.Context, mux *runtime.ServeMux, client
 		}
 		forward_API_GetTasks_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
+<<<<<<< HEAD
 	mux.Handle(http.MethodPost, pattern_API_UpdateTime_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
@@ -307,17 +322,26 @@ func RegisterAPIHandlerClient(ctx context.Context, mux *runtime.ServeMux, client
 		}
 		forward_API_UpdateTime_0(annotatedContext, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
 	})
+=======
+>>>>>>> dev
 	return nil
 }
 
 var (
 	pattern_API_CheckUpdate_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 1, 0, 4, 1, 5, 1}, []string{"check", "epoch"}, ""))
+<<<<<<< HEAD
 	pattern_API_GetTasks_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"get_tasks"}, ""))
 	pattern_API_UpdateTime_0  = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1}, []string{"config", "time"}, ""))
+=======
+	pattern_API_GetTasks_0    = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0}, []string{"tasks"}, ""))
+>>>>>>> dev
 )
 
 var (
 	forward_API_CheckUpdate_0 = runtime.ForwardResponseMessage
 	forward_API_GetTasks_0    = runtime.ForwardResponseMessage
+<<<<<<< HEAD
 	forward_API_UpdateTime_0  = runtime.ForwardResponseMessage
+=======
+>>>>>>> dev
 )

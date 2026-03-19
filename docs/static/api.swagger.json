@@ -86,6 +86,7 @@
       }
     },
     "/get_tasks": {
+    "/tasks": {
       "get": {
         "operationId": "API_GetTasks",
         "responses": {
