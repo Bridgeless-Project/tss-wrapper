@@ -7,6 +7,7 @@ import (
 	"syscall"
 
 	"github.com/Bridgeless-Project/tss-wrapper-svc/cmd/utils"
+	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/api"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/config"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/core"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/core/observer"
@@ -16,7 +17,7 @@ import (
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/tss/autoresharing"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/tss/update"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/types"
-	pbTypes "github.com/Bridgeless-Project/tss-wrapper-svc/resources/types"
+	grpcTypes "github.com/Bridgeless-Project/tss-wrapper-svc/resources/types"
 	"github.com/pkg/errors"
 	"github.com/spf13/cobra"
 	"gitlab.com/distributed_lab/logan/v3"
@@ -74,6 +75,13 @@ func runService(ctx context.Context, cfg config.Config) error {
 		tasksDb,
 	)
 
+	apiServer := api.NewServer(
+		cfg.GRPCListener(),
+		cfg.HTTPListener(),
+		tasksDb,
+		logger.WithField("component", "server"),
+	)
+
 	for _, eventCfg := range eventsConfig {
 		task, err := createTask(eventCfg.TaskType, cfg)
 		if err != nil {
@@ -110,6 +118,13 @@ func runService(ctx context.Context, cfg config.Config) error {
 		return errors.Wrap(taskScheduler.Run(ctx), "error while running task scheduler")
 	})
 
+	eg.Go(func() error {
+		return errors.Wrap(apiServer.RunHTTP(ctx), "error while running API HTTP gateway")
+	})
+	eg.Go(func() error {
+		return errors.Wrap(apiServer.RunGRPC(ctx), "error while running API GRPC server")
+	})
+
 	return eg.Wait()
 }
 
@@ -141,7 +156,7 @@ func loadIncompleteTasks(
 		task.SetID(record.ID)
 
 		// Update status to Planned and schedule
-		if err := tasksDb.UpdateStatus(record.ID, pbTypes.ProcessStatus_PROCESS_STATUS_PLANNED); err != nil {
+		if err := tasksDb.UpdateStatus(record.ID, grpcTypes.ProcessStatus_PROCESS_STATUS_PLANNED); err != nil {
 			logger.WithError(err).
 				WithField("task_id", record.ID).
 				Error("failed to update task status to planned")

@@ -7,8 +7,7 @@ import "types/party.proto";
 import "types/const.proto";
 
 
-option go_package = "github.com/Bridgeless-Project/tss-wrapper-svc/internal/api/types";
-
+option go_package = "github.com/Bridgeless-Project/tss-wrapper-svc/resources";
 
 option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
   info: {
@@ -23,8 +22,22 @@ service API{
       get: "/check/{epoch}"
     };
   }
+  rpc GetTasks(GetTasksRequest) returns (GetTasksResponse) {
+    option (google.api.http) = {
+      get: "/tasks"
+    };
+  }
 }
 
+message GetTasksRequest {
+  optional ProcessStatus status = 1;
+  optional uint64 offset = 2;
+  optional uint64 limit = 3;
+}
+
+message GetTasksResponse {
+  repeated TaskRecord records = 1;
+}
 
 message UpdateDataRequest {
   repeated Certiticate certificates = 1;
@@ -36,6 +49,7 @@ message UpdateDataResponse {
 
 message CheckUpdateRequest {
    string update_number = 1;
+   uint64 epoch = 2;
 }
 
 message CheckUpdateResponse {

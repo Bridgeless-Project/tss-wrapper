@@ -77,6 +77,31 @@ func (q *tasksQ) UpdateStatusWithError(id int64, status types.ProcessStatus, err
 	return errors.Wrap(err, "failed to update task status with error")
 }
 
+func (q *tasksQ) Page(pageParams pgdb.OffsetPageParams) db.TasksQ {
+	q.selector = pageParams.ApplyTo(q.selector, "id")
+	return q
+}
+
+func (q *tasksQ) FilterByStatus(status types.ProcessStatus) db.TasksQ {
+	q.selector = q.selector.Where(squirrel.Eq{taskStatusField: int32(status)})
+	return q
+}
+
+func (q *tasksQ) OrderByCreatedAt() db.TasksQ {
+	q.selector = q.selector.OrderBy(taskCreatedAtField + " ASC")
+	return q
+}
+
+func (q *tasksQ) GetAll() ([]db.TaskRecord, error) {
+	var records []db.TaskRecord
+	err := q.db.Select(&records, q.selector)
+	if err != nil {
+		return nil, errors.Wrap(err, "failed to get tasks")
+	}
+
+	return records, nil
+}
+
 func (q *tasksQ) GetIncomplete() ([]db.TaskRecord, error) {
 	// Get tasks that are not COMPLETED and not FAILED
 	stmt := q.selector.Where(
