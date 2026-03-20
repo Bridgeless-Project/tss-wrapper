@@ -5,6 +5,13 @@ import (
 	"github.com/Bridgeless-Project/tss-wrapper-svc/resources"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/resources/types"
 	"gitlab.com/distributed_lab/kit/pgdb"
+	"time"
+)
+
+const (
+	DefaultLimit         = 15
+	DefaultOffset        = 0
+	DefaultExecutionTime = 10
 )
 
 func ToGetTasksResponse(records []db.TaskRecord) *resources.GetTasksResponse {
@@ -49,8 +56,14 @@ func ToUpdateTimeResponse(status bool) *resources.UpdateTimeResponse {
 	return &resources.UpdateTimeResponse{Result: status}
 }
 
-const (
-	DefaultLimit         = 15
-	DefaultOffset        = 0
-	DefaultExecutionTime = 10
-)
+func ValidateTime(request *resources.UpdateTimeRequest) bool {
+	timeStart := time.Unix(request.StartTime, 0).Local()
+	timeTarget := time.Unix(request.TargetTime, 0).Local().Add(DefaultExecutionTime * time.Second)
+	if timeStart.After(timeTarget) {
+		return false
+	}
+	if timeStart.Before(time.Now().UTC()) {
+		return false
+	}
+	return true
+}

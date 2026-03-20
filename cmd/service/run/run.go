@@ -125,6 +125,7 @@ func runService(ctx context.Context, cfg config.Config) error {
 	eg.Go(func() error {
 		return errors.Wrap(apiServer.RunHTTP(ctx), "error while running API HTTP gateway")
 	})
+
 	eg.Go(func() error {
 		return errors.Wrap(apiServer.RunGRPC(ctx), "error while running API GRPC server")
 	})

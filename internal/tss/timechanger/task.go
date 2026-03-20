@@ -4,6 +4,8 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/api/common"
+	"google.golang.org/grpc"
 	"time"
 
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/config"
@@ -25,6 +27,7 @@ type Task struct {
 	ConfigPath string
 	StartTime  time.Time
 	TargetTime time.Time
+	GRPCCore   grpc.ClientConn
 }
 
 func NewTask(tssconfig *config.TSSConfig) *Task {
@@ -35,15 +38,15 @@ func (t Task) Execute(ctx context.Context) (bool, error) {
 	configer := helpers.NewConfigManager(t.ConfigPath)
 	err := configer.Load()
 	if err != nil {
-		return false, err
+		return false, errors.Wrap(err, "YAML load error")
 	}
-	err = configer.UpdateResharingTime(t.TargetTime)
+	err = configer.UpdateResharingTime(t.TargetTime.Add(common.DefaultExecutionTime + time.Minute*10))
 	if err != nil {
-		return false, err
+		return false, errors.Wrap(err, "Error changing time")
 	}
 	err = configer.Save()
 	if err != nil {
-		return false, err
+		return false, errors.Wrap(err, "YAML save error")
 	}
 	return true, nil
 }
@@ -81,7 +84,7 @@ func (t Task) StartScheduling(ctx context.Context, taskChan chan<- types.Task) {
 }
 
 func (t Task) GetName() string {
-	return "UpdateTask"
+	return "TimeChanger"
 }
 
 func (t Task) GetID() int64 {
@@ -113,5 +116,6 @@ func (t *Task) UnmarshalData(data string) error {
 		return errors.Wrap(err, "failed to unmarshal task data")
 	}
 	t.StartTime = time.Unix(td.StartTime, 0)
+	t.TargetTime = time.Unix(td.TargetTime, 0)
 	return nil
 }

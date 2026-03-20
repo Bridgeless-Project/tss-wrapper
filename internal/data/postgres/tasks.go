@@ -103,7 +103,7 @@ func (q *tasksQ) GetAll() ([]db.TaskRecord, error) {
 }
 
 func (q *tasksQ) GetIncomplete() ([]db.TaskRecord, error) {
-	// GetAll tasks that are not COMPLETED and not FAILED
+	// Get tasks that are not COMPLETED and not FAILED
 	stmt := q.selector.Where(
 		squirrel.And{
 			squirrel.NotEq{taskStatusField: int32(types.ProcessStatus_PROCESS_STATUS_COMPLETED)},
