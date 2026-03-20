@@ -2,13 +2,14 @@ package grpc
 
 import (
 	"context"
+	"time"
+
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/api/common"
 	apiCtx "github.com/Bridgeless-Project/tss-wrapper-svc/internal/api/grpc/ctx"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/tss/timechanger"
 	types "github.com/Bridgeless-Project/tss-wrapper-svc/resources"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"time"
 )
 
 func (i Implementation) UpdateTime(ctx context.Context, request *types.UpdateTimeRequest) (*types.UpdateTimeResponse, error) {
@@ -25,5 +26,5 @@ func (i Implementation) UpdateTime(ctx context.Context, request *types.UpdateTim
 	task.TargetTime = time.Unix(request.TargetTime, 0).Local()
 
 	scheduler.ScheduleTask(context.WithoutCancel(ctx), task)
-	return common.ToUpdateTimeResponse(true), nil
+	return common.ToUpdateTimeResponse(), nil
 }

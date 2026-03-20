@@ -79,7 +79,6 @@ func (x *UpdateTimeRequest) GetTargetTime() int64 {
 
 type UpdateTimeResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
-	Result        bool                   `protobuf:"varint,1,opt,name=result,proto3" json:"result,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -112,13 +111,6 @@ func (x *UpdateTimeResponse) ProtoReflect() protoreflect.Message {
 // Deprecated: Use UpdateTimeResponse.ProtoReflect.Descriptor instead.
 func (*UpdateTimeResponse) Descriptor() ([]byte, []int) {
 	return file_api_proto_rawDescGZIP(), []int{1}
-}
-
-func (x *UpdateTimeResponse) GetResult() bool {
-	if x != nil {
-		return x.Result
-	}
-	return false
 }
 
 type GetTasksRequest struct {
@@ -426,9 +418,8 @@ const file_api_proto_rawDesc = "" +
 	"\n" +
 	"start_time\x18\x01 \x01(\x03R\tstartTime\x12\x1f\n" +
 	"\vtarget_time\x18\x02 \x01(\x03R\n" +
-	"targetTime\",\n" +
-	"\x12UpdateTimeResponse\x12\x16\n" +
-	"\x06result\x18\x01 \x01(\bR\x06result\"\x96\x01\n" +
+	"targetTime\"\x14\n" +
+	"\x12UpdateTimeResponse\"\x96\x01\n" +
 	"\x0fGetTasksRequest\x12+\n" +
 	"\x06status\x18\x01 \x01(\x0e2\x0e.ProcessStatusH\x00R\x06status\x88\x01\x01\x12\x1b\n" +
 	"\x06offset\x18\x02 \x01(\x04H\x01R\x06offset\x88\x01\x01\x12\x19\n" +

@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/api/common"
-	"google.golang.org/grpc"
 	"time"
 
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/config"
@@ -27,7 +26,6 @@ type Task struct {
 	ConfigPath string
 	StartTime  time.Time
 	TargetTime time.Time
-	GRPCCore   grpc.ClientConn
 }
 
 func NewTask(tssconfig *config.TSSConfig) *Task {
@@ -40,7 +38,11 @@ func (t Task) Execute(ctx context.Context) (bool, error) {
 	if err != nil {
 		return false, errors.Wrap(err, "YAML load error")
 	}
-	err = configer.UpdateResharingTime(t.TargetTime.Add(common.DefaultExecutionTime + time.Minute*10))
+	threshold, err := configer.GetThreshold()
+	if err != nil {
+		return false, errors.Wrap(err, "Failed to get threshold")
+	}
+	err = configer.SetStartInfo(t.TargetTime.Add(common.DefaultExecutionTime+time.Minute*10), threshold)
 	if err != nil {
 		return false, errors.Wrap(err, "Error changing time")
 	}

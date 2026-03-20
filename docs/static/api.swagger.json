@@ -211,12 +211,7 @@
       }
     },
     "UpdateTimeResponse": {
-      "type": "object",
-      "properties": {
-        "result": {
-          "type": "boolean"
-        }
-      }
+      "type": "object"
     },
     "protobufAny": {
       "type": "object",
