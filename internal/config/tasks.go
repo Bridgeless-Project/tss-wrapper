@@ -15,6 +15,7 @@ type TaskType string
 const (
 	TaskTypeAutoResharing TaskType = "auto_resharing"
 	TaskTypeUpdate        TaskType = "update"
+	TaskTypeTimeChanger   TaskType = "timechanger"
 )
 
 type EventsConfiger interface {

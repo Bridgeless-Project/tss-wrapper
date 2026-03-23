@@ -1,10 +1,18 @@
 package common
 
 import (
+	"time"
+
 	db "github.com/Bridgeless-Project/tss-wrapper-svc/internal/data"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/resources"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/resources/types"
 	"gitlab.com/distributed_lab/kit/pgdb"
+)
+
+const (
+	DefaultLimit         = 15
+	DefaultOffset        = 0
+	DefaultExecutionTime = 10
 )
 
 func ToGetTasksResponse(records []db.TaskRecord) *resources.GetTasksResponse {
@@ -45,7 +53,18 @@ func GetPaginationSettings(limitPtr *uint64, offsetPtr *uint64) pgdb.OffsetPageP
 	return pgdb.OffsetPageParams{Limit: limit, PageNumber: offset}
 }
 
-const (
-	DefaultLimit  = 15
-	DefaultOffset = 0
-)
+func ToUpdateTimeResponse() *resources.UpdateTimeResponse {
+	return &resources.UpdateTimeResponse{}
+}
+
+func ValidateTime(request *resources.UpdateTimeRequest) bool {
+	timeStart := time.Unix(request.StartTime, 0).Local()
+	timeTarget := time.Unix(request.TargetTime, 0).Local().Add(DefaultExecutionTime * time.Second)
+	if timeStart.After(timeTarget) {
+		return false
+	}
+	if timeStart.Before(time.Now().UTC()) {
+		return false
+	}
+	return true
+}

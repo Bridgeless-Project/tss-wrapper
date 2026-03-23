@@ -53,6 +53,38 @@
         ]
       }
     },
+    "/config/time": {
+      "post": {
+        "operationId": "API_UpdateTime",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/UpdateTimeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateTimeRequest"
+            }
+          }
+        ],
+        "tags": [
+          "API"
+        ]
+      }
+    },
     "/tasks": {
       "get": {
         "operationId": "API_GetTasks",
@@ -164,6 +196,22 @@
           "type": "string"
         }
       }
+    },
+    "UpdateTimeRequest": {
+      "type": "object",
+      "properties": {
+        "startTime": {
+          "type": "string",
+          "format": "int64"
+        },
+        "targetTime": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "UpdateTimeResponse": {
+      "type": "object"
     },
     "protobufAny": {
       "type": "object",

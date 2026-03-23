@@ -22,11 +22,25 @@ service API{
       get: "/check/{epoch}"
     };
   }
+  rpc UpdateTime(UpdateTimeRequest) returns (UpdateTimeResponse) {
+    option (google.api.http) = {
+      post: "/config/time",
+      body: "*"
+    };
+  }
   rpc GetTasks(GetTasksRequest) returns (GetTasksResponse) {
     option (google.api.http) = {
       get: "/tasks"
     };
   }
+}
+
+message UpdateTimeRequest {
+  int64 start_time = 1;
+  int64 target_time = 2;
+}
+
+message UpdateTimeResponse {
 }
 
 message GetTasksRequest {

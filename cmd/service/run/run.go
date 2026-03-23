@@ -6,6 +6,8 @@ import (
 	"os/signal"
 	"syscall"
 
+	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/tss/timechanger"
+
 	"github.com/Bridgeless-Project/tss-wrapper-svc/cmd/utils"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/api"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/config"
@@ -80,6 +82,8 @@ func runService(ctx context.Context, cfg config.Config) error {
 		cfg.HTTPListener(),
 		tasksDb,
 		logger.WithField("component", "server"),
+		taskScheduler,
+		cfg.TSSConfig(),
 	)
 
 	for _, eventCfg := range eventsConfig {
@@ -121,6 +125,7 @@ func runService(ctx context.Context, cfg config.Config) error {
 	eg.Go(func() error {
 		return errors.Wrap(apiServer.RunHTTP(ctx), "error while running API HTTP gateway")
 	})
+
 	eg.Go(func() error {
 		return errors.Wrap(apiServer.RunGRPC(ctx), "error while running API GRPC server")
 	})
@@ -183,6 +188,8 @@ func createTask(taskType config.TaskType, cfg config.Config) (types.Task, error)
 		), nil
 	case config.TaskTypeUpdate:
 		return update.NewTask(), nil
+	case config.TaskTypeTimeChanger:
+		return timechanger.NewTask(cfg.TSSConfig()), nil
 	default:
 		return nil, fmt.Errorf("unknown task type: %s", taskType)
 	}

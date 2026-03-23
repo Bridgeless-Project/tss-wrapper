@@ -25,6 +25,94 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
+type UpdateTimeRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	StartTime     int64                  `protobuf:"varint,1,opt,name=start_time,json=startTime,proto3" json:"start_time,omitempty"`
+	TargetTime    int64                  `protobuf:"varint,2,opt,name=target_time,json=targetTime,proto3" json:"target_time,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateTimeRequest) Reset() {
+	*x = UpdateTimeRequest{}
+	mi := &file_api_proto_msgTypes[0]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateTimeRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateTimeRequest) ProtoMessage() {}
+
+func (x *UpdateTimeRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_msgTypes[0]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateTimeRequest.ProtoReflect.Descriptor instead.
+func (*UpdateTimeRequest) Descriptor() ([]byte, []int) {
+	return file_api_proto_rawDescGZIP(), []int{0}
+}
+
+func (x *UpdateTimeRequest) GetStartTime() int64 {
+	if x != nil {
+		return x.StartTime
+	}
+	return 0
+}
+
+func (x *UpdateTimeRequest) GetTargetTime() int64 {
+	if x != nil {
+		return x.TargetTime
+	}
+	return 0
+}
+
+type UpdateTimeResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *UpdateTimeResponse) Reset() {
+	*x = UpdateTimeResponse{}
+	mi := &file_api_proto_msgTypes[1]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *UpdateTimeResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*UpdateTimeResponse) ProtoMessage() {}
+
+func (x *UpdateTimeResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_api_proto_msgTypes[1]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use UpdateTimeResponse.ProtoReflect.Descriptor instead.
+func (*UpdateTimeResponse) Descriptor() ([]byte, []int) {
+	return file_api_proto_rawDescGZIP(), []int{1}
+}
+
 type GetTasksRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Status        *types.ProcessStatus   `protobuf:"varint,1,opt,name=status,proto3,enum=ProcessStatus,oneof" json:"status,omitempty"`
@@ -36,7 +124,7 @@ type GetTasksRequest struct {
 
 func (x *GetTasksRequest) Reset() {
 	*x = GetTasksRequest{}
-	mi := &file_api_proto_msgTypes[0]
+	mi := &file_api_proto_msgTypes[2]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -48,7 +136,7 @@ func (x *GetTasksRequest) String() string {
 func (*GetTasksRequest) ProtoMessage() {}
 
 func (x *GetTasksRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[0]
+	mi := &file_api_proto_msgTypes[2]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -61,7 +149,7 @@ func (x *GetTasksRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetTasksRequest.ProtoReflect.Descriptor instead.
 func (*GetTasksRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{0}
+	return file_api_proto_rawDescGZIP(), []int{2}
 }
 
 func (x *GetTasksRequest) GetStatus() types.ProcessStatus {
@@ -94,7 +182,7 @@ type GetTasksResponse struct {
 
 func (x *GetTasksResponse) Reset() {
 	*x = GetTasksResponse{}
-	mi := &file_api_proto_msgTypes[1]
+	mi := &file_api_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -106,7 +194,7 @@ func (x *GetTasksResponse) String() string {
 func (*GetTasksResponse) ProtoMessage() {}
 
 func (x *GetTasksResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[1]
+	mi := &file_api_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -119,7 +207,7 @@ func (x *GetTasksResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetTasksResponse.ProtoReflect.Descriptor instead.
 func (*GetTasksResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{1}
+	return file_api_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *GetTasksResponse) GetRecords() []*types.TaskRecord {
@@ -138,7 +226,7 @@ type UpdateDataRequest struct {
 
 func (x *UpdateDataRequest) Reset() {
 	*x = UpdateDataRequest{}
-	mi := &file_api_proto_msgTypes[2]
+	mi := &file_api_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -150,7 +238,7 @@ func (x *UpdateDataRequest) String() string {
 func (*UpdateDataRequest) ProtoMessage() {}
 
 func (x *UpdateDataRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[2]
+	mi := &file_api_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -163,7 +251,7 @@ func (x *UpdateDataRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateDataRequest.ProtoReflect.Descriptor instead.
 func (*UpdateDataRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{2}
+	return file_api_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *UpdateDataRequest) GetCertificates() []*types.Certiticate {
@@ -182,7 +270,7 @@ type UpdateDataResponse struct {
 
 func (x *UpdateDataResponse) Reset() {
 	*x = UpdateDataResponse{}
-	mi := &file_api_proto_msgTypes[3]
+	mi := &file_api_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -194,7 +282,7 @@ func (x *UpdateDataResponse) String() string {
 func (*UpdateDataResponse) ProtoMessage() {}
 
 func (x *UpdateDataResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[3]
+	mi := &file_api_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -207,7 +295,7 @@ func (x *UpdateDataResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateDataResponse.ProtoReflect.Descriptor instead.
 func (*UpdateDataResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{3}
+	return file_api_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *UpdateDataResponse) GetStatus() types.ProcessStatus {
@@ -227,7 +315,7 @@ type CheckUpdateRequest struct {
 
 func (x *CheckUpdateRequest) Reset() {
 	*x = CheckUpdateRequest{}
-	mi := &file_api_proto_msgTypes[4]
+	mi := &file_api_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -239,7 +327,7 @@ func (x *CheckUpdateRequest) String() string {
 func (*CheckUpdateRequest) ProtoMessage() {}
 
 func (x *CheckUpdateRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[4]
+	mi := &file_api_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -252,7 +340,7 @@ func (x *CheckUpdateRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CheckUpdateRequest.ProtoReflect.Descriptor instead.
 func (*CheckUpdateRequest) Descriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{4}
+	return file_api_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *CheckUpdateRequest) GetUpdateNumber() string {
@@ -279,7 +367,7 @@ type CheckUpdateResponse struct {
 
 func (x *CheckUpdateResponse) Reset() {
 	*x = CheckUpdateResponse{}
-	mi := &file_api_proto_msgTypes[5]
+	mi := &file_api_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -291,7 +379,7 @@ func (x *CheckUpdateResponse) String() string {
 func (*CheckUpdateResponse) ProtoMessage() {}
 
 func (x *CheckUpdateResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_api_proto_msgTypes[5]
+	mi := &file_api_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -304,7 +392,7 @@ func (x *CheckUpdateResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CheckUpdateResponse.ProtoReflect.Descriptor instead.
 func (*CheckUpdateResponse) Descriptor() ([]byte, []int) {
-	return file_api_proto_rawDescGZIP(), []int{5}
+	return file_api_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *CheckUpdateResponse) GetUpdateTime() uint64 {
@@ -325,7 +413,13 @@ var File_api_proto protoreflect.FileDescriptor
 
 const file_api_proto_rawDesc = "" +
 	"\n" +
-	"\tapi.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x14gogoproto/gogo.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x11types/party.proto\x1a\x11types/const.proto\"\x96\x01\n" +
+	"\tapi.proto\x1a\x1cgoogle/api/annotations.proto\x1a\x14gogoproto/gogo.proto\x1a.protoc-gen-openapiv2/options/annotations.proto\x1a\x11types/party.proto\x1a\x11types/const.proto\"S\n" +
+	"\x11UpdateTimeRequest\x12\x1d\n" +
+	"\n" +
+	"start_time\x18\x01 \x01(\x03R\tstartTime\x12\x1f\n" +
+	"\vtarget_time\x18\x02 \x01(\x03R\n" +
+	"targetTime\"\x14\n" +
+	"\x12UpdateTimeResponse\"\x96\x01\n" +
 	"\x0fGetTasksRequest\x12+\n" +
 	"\x06status\x18\x01 \x01(\x0e2\x0e.ProcessStatusH\x00R\x06status\x88\x01\x01\x12\x1b\n" +
 	"\x06offset\x18\x02 \x01(\x04H\x01R\x06offset\x88\x01\x01\x12\x19\n" +
@@ -345,9 +439,11 @@ const file_api_proto_rawDesc = "" +
 	"\x13CheckUpdateResponse\x12\x1f\n" +
 	"\vupdate_time\x18\x01 \x01(\x04R\n" +
 	"updateTime\x12#\n" +
-	"\rupdate_number\x18\x02 \x01(\tR\fupdateNumber2\x98\x01\n" +
+	"\rupdate_number\x18\x02 \x01(\tR\fupdateNumber2\xe8\x01\n" +
 	"\x03API\x12P\n" +
-	"\vCheckUpdate\x12\x13.CheckUpdateRequest\x1a\x14.CheckUpdateResponse\"\x16\x82\xd3\xe4\x93\x02\x10\x12\x0e/check/{epoch}\x12?\n" +
+	"\vCheckUpdate\x12\x13.CheckUpdateRequest\x1a\x14.CheckUpdateResponse\"\x16\x82\xd3\xe4\x93\x02\x10\x12\x0e/check/{epoch}\x12N\n" +
+	"\n" +
+	"UpdateTime\x12\x12.UpdateTimeRequest\x1a\x13.UpdateTimeResponse\"\x17\x82\xd3\xe4\x93\x02\x11:\x01*\"\f/config/time\x12?\n" +
 	"\bGetTasks\x12\x10.GetTasksRequest\x1a\x11.GetTasksResponse\"\x0e\x82\xd3\xe4\x93\x02\b\x12\x06/tasksBZ\x92A\x1e\x12\x1c\n" +
 	"\x13TSS-wrapper-svc API2\x050.1.0Z7github.com/Bridgeless-Project/tss-wrapper-svc/resourcesb\x06proto3"
 
@@ -363,32 +459,36 @@ func file_api_proto_rawDescGZIP() []byte {
 	return file_api_proto_rawDescData
 }
 
-var file_api_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
+var file_api_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
 var file_api_proto_goTypes = []any{
-	(*GetTasksRequest)(nil),     // 0: GetTasksRequest
-	(*GetTasksResponse)(nil),    // 1: GetTasksResponse
-	(*UpdateDataRequest)(nil),   // 2: UpdateDataRequest
-	(*UpdateDataResponse)(nil),  // 3: UpdateDataResponse
-	(*CheckUpdateRequest)(nil),  // 4: CheckUpdateRequest
-	(*CheckUpdateResponse)(nil), // 5: CheckUpdateResponse
-	(types.ProcessStatus)(0),    // 6: ProcessStatus
-	(*types.TaskRecord)(nil),    // 7: TaskRecord
-	(*types.Certiticate)(nil),   // 8: Certiticate
+	(*UpdateTimeRequest)(nil),   // 0: UpdateTimeRequest
+	(*UpdateTimeResponse)(nil),  // 1: UpdateTimeResponse
+	(*GetTasksRequest)(nil),     // 2: GetTasksRequest
+	(*GetTasksResponse)(nil),    // 3: GetTasksResponse
+	(*UpdateDataRequest)(nil),   // 4: UpdateDataRequest
+	(*UpdateDataResponse)(nil),  // 5: UpdateDataResponse
+	(*CheckUpdateRequest)(nil),  // 6: CheckUpdateRequest
+	(*CheckUpdateResponse)(nil), // 7: CheckUpdateResponse
+	(types.ProcessStatus)(0),    // 8: ProcessStatus
+	(*types.TaskRecord)(nil),    // 9: TaskRecord
+	(*types.Certiticate)(nil),   // 10: Certiticate
 }
 var file_api_proto_depIdxs = []int32{
-	6, // 0: GetTasksRequest.status:type_name -> ProcessStatus
-	7, // 1: GetTasksResponse.records:type_name -> TaskRecord
-	8, // 2: UpdateDataRequest.certificates:type_name -> Certiticate
-	6, // 3: UpdateDataResponse.status:type_name -> ProcessStatus
-	4, // 4: API.CheckUpdate:input_type -> CheckUpdateRequest
-	0, // 5: API.GetTasks:input_type -> GetTasksRequest
-	5, // 6: API.CheckUpdate:output_type -> CheckUpdateResponse
-	1, // 7: API.GetTasks:output_type -> GetTasksResponse
-	6, // [6:8] is the sub-list for method output_type
-	4, // [4:6] is the sub-list for method input_type
-	4, // [4:4] is the sub-list for extension type_name
-	4, // [4:4] is the sub-list for extension extendee
-	0, // [0:4] is the sub-list for field type_name
+	8,  // 0: GetTasksRequest.status:type_name -> ProcessStatus
+	9,  // 1: GetTasksResponse.records:type_name -> TaskRecord
+	10, // 2: UpdateDataRequest.certificates:type_name -> Certiticate
+	8,  // 3: UpdateDataResponse.status:type_name -> ProcessStatus
+	6,  // 4: API.CheckUpdate:input_type -> CheckUpdateRequest
+	0,  // 5: API.UpdateTime:input_type -> UpdateTimeRequest
+	2,  // 6: API.GetTasks:input_type -> GetTasksRequest
+	7,  // 7: API.CheckUpdate:output_type -> CheckUpdateResponse
+	1,  // 8: API.UpdateTime:output_type -> UpdateTimeResponse
+	3,  // 9: API.GetTasks:output_type -> GetTasksResponse
+	7,  // [7:10] is the sub-list for method output_type
+	4,  // [4:7] is the sub-list for method input_type
+	4,  // [4:4] is the sub-list for extension type_name
+	4,  // [4:4] is the sub-list for extension extendee
+	0,  // [0:4] is the sub-list for field type_name
 }
 
 func init() { file_api_proto_init() }
@@ -396,14 +496,14 @@ func file_api_proto_init() {
 	if File_api_proto != nil {
 		return
 	}
-	file_api_proto_msgTypes[0].OneofWrappers = []any{}
+	file_api_proto_msgTypes[2].OneofWrappers = []any{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_api_proto_rawDesc), len(file_api_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   6,
+			NumMessages:   8,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

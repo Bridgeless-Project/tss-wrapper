@@ -7,6 +7,9 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/config"
+	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/core/scheduler"
+
 	"github.com/Bridgeless-Project/tss-wrapper-svc/docs"
 	srvgrpc "github.com/Bridgeless-Project/tss-wrapper-svc/internal/api/grpc"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/api/grpc/ctx"
@@ -37,6 +40,8 @@ func NewServer(
 	http net.Listener,
 	tasksDB db.TasksQ,
 	logger *logan.Entry,
+	scheduler *scheduler.Scheduler,
+	tssConfig *config.TSSConfig,
 ) *Server {
 	return &Server{
 		grpc:   grpc,
@@ -46,6 +51,8 @@ func NewServer(
 		ctxExtenders: []func(context.Context) context.Context{
 			ctx.LoggerProvider(logger),
 			ctx.DBProvider(tasksDB),
+			ctx.SchedulerProvider(scheduler),
+			ctx.TSSConfigProvider(tssConfig),
 		},
 	}
 }

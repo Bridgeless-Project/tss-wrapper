@@ -72,6 +72,15 @@ func (c *ConfigManager) Save() error {
 	return nil
 }
 
+func (c *ConfigManager) GetThreshold() (uint32, error) {
+	tssMap, ok := c.rawConfig[keyTss].(map[string]interface{})
+	if !ok {
+		return 0, errors.New("invalid tss format")
+	}
+
+	return tssMap[keyThreshold].(uint32), nil
+}
+
 // -------------------PARTIES---------------------
 
 func (c *ConfigManager) GetParties(key string) ([]types.Party, error) {
@@ -157,6 +166,16 @@ func (c *ConfigManager) UpdateResharingParams(epoch uint32, startTime time.Time,
 		keyPartiesList: listRaw,
 	}
 
+	return nil
+}
+
+func (c *ConfigManager) UpdateResharingTime(startTime time.Time) error {
+	resharingParamsMap, ok := c.rawConfig[ResharingKey].(map[string]interface{})
+	if !ok {
+		resharingParamsMap = make(map[string]interface{})
+		c.rawConfig[ResharingKey] = resharingParamsMap
+	}
+	resharingParamsMap[keyStartTime] = startTime
 	return nil
 }
 
