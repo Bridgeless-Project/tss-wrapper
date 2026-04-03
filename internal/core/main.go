@@ -10,7 +10,7 @@ import (
 
 	db "github.com/Bridgeless-Project/tss-wrapper-svc/internal/data"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/types"
-	pbTypes "github.com/Bridgeless-Project/tss-wrapper-svc/resources/types"
+	grpcTypes "github.com/Bridgeless-Project/tss-wrapper-svc/resources/types"
 	"github.com/pkg/errors"
 	"gitlab.com/distributed_lab/logan/v3"
 )
@@ -167,7 +167,7 @@ func (o *Orchestrator) Run(ctx context.Context) error {
 			}
 
 			// Update task status to Completed
-			if err = o.tasksDb.UpdateStatus(taskID, pbTypes.ProcessStatus_PROCESS_STATUS_COMPLETED); err != nil {
+			if err = o.tasksDb.UpdateStatus(taskID, grpcTypes.ProcessStatus_PROCESS_STATUS_COMPLETED); err != nil {
 				o.logger.WithError(err).
 					WithField("task_id", taskID).
 					Error("failed to update task status to completed")
@@ -188,7 +188,7 @@ func (o *Orchestrator) Run(ctx context.Context) error {
 
 // updateTaskFailed updates task status to Failed with error message
 func (o *Orchestrator) updateTaskFailed(taskID int64, err error) {
-	if updateErr := o.tasksDb.UpdateStatusWithError(taskID, pbTypes.ProcessStatus_PROCESS_STATUS_FAILED, err.Error()); updateErr != nil {
+	if updateErr := o.tasksDb.UpdateStatusWithError(taskID, grpcTypes.ProcessStatus_PROCESS_STATUS_FAILED, err.Error()); updateErr != nil {
 		o.logger.WithError(updateErr).
 			WithField("task_id", taskID).
 			Error("failed to update task status to failed")
