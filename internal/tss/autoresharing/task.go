@@ -195,7 +195,6 @@ func (t Task) Execute(ctx context.Context) (bool, error) {
 		)
 	}
 	var (
-		epochId    uint32
 		utxoChains []bridgetypes.Chain
 		epoch      *bridgetypes.Epoch
 		blockTime  time.Time
@@ -204,7 +203,7 @@ func (t Task) Execute(ctx context.Context) (bool, error) {
 
 	err = retry.Do(
 		func() error {
-			epoch, err = helpers.GetEpochState(ctx, epochId, t.GRPCCore)
+			epoch, err = helpers.GetEpochState(ctx, t.EpochId, t.GRPCCore)
 			if epoch.Status != bridgetypes.EpochStatus_RUNNING {
 				return errors.New("epoch is not running yet")
 			}
@@ -249,7 +248,7 @@ func (t Task) Execute(ctx context.Context) (bool, error) {
 		return true, nil
 	}
 
-	return true, errors.Wrap(t.updateConfigAfterResharing(epoch, blockTime.Add(10*time.Minute), utxoChains), "failed to update config after start")
+	return true, errors.Wrap(t.updateConfigAfterResharing(epoch, blockTime.Add(5*time.Minute), utxoChains), "failed to update config after start")
 }
 
 func (t Task) isNewParty() bool {
