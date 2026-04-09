@@ -122,5 +122,5 @@ func (t Task) Execute(ctx context.Context) (bool, error) {
 	cmd.Stdout = os.Stdout
 	cmd.Stderr = os.Stderr
 
-	return true, errors.Wrap(cmd.Run(), "failed to execute resharing task")
+	return true, errors.Wrap(cmd.Run(), "failed to execute migrate_up task")
 }
