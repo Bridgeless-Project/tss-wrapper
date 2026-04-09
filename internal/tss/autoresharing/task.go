@@ -189,13 +189,24 @@ func (t Task) Execute(ctx context.Context) (bool, error) {
 	if err := cmd.Run(); err != nil {
 		return !isRevoked, errors.Wrap(err, "failed to execute resharing task")
 	}
+	fmt.Println("Resharing completed, updating config with new epoch info")
+
+	// USE DEFAULT RETRY OPTIONS FOR ALL PARTIES
 	opt := make([]retry.Option, 0)
-	if t.isNewParty() {
-		opt = append(opt,
-			retry.Delay(1*time.Minute),
-			retry.Attempts(120),
-		)
+	//if t.isNewParty() {
+	//	fmt.Println("Waiting for new party to be active")
+	//	opt = append(opt,
+	//		retry.Delay(40*time.Second),
+	//		retry.Attempts(120),
+	//	)
+	//}
+
+	// do not change config if party is revoked, just return
+	if isRevoked {
+		fmt.Println("Party is revoked, skipping config update")
+		return false, nil
 	}
+
 	var (
 		utxoChains []bridgetypes.Chain
 		epoch      *bridgetypes.Epoch
@@ -205,6 +216,7 @@ func (t Task) Execute(ctx context.Context) (bool, error) {
 
 	err = retry.Do(
 		func() error {
+			fmt.Println(fmt.Sprintf("Waiting for epoch %d to start", t.EpochId))
 			epoch, err = helpers.GetEpochState(ctx, t.EpochId, t.GRPCCore)
 			if epoch.Status != bridgetypes.EpochStatus_RUNNING {
 				return errors.New(fmt.Sprintf("epoch %d is not running yet", t.EpochId))
@@ -220,6 +232,7 @@ func (t Task) Execute(ctx context.Context) (bool, error) {
 
 	err = retry.Do(
 		func() error {
+			fmt.Println("Waiting for blocktime")
 			height := int64(epoch.FinalizedBlock)
 			block, err := t.HTTPCore.Block(ctx, &height)
 			if err != nil {
@@ -236,6 +249,7 @@ func (t Task) Execute(ctx context.Context) (bool, error) {
 
 	err = retry.Do(
 		func() error {
+			fmt.Println("Waiting for bitcoin bridge address")
 			utxoChains, err = helpers.GetChains(ctx, bridgetypes.ChainType_BITCOIN, t.GRPCCore)
 			return err
 		},
@@ -245,11 +259,7 @@ func (t Task) Execute(ctx context.Context) (bool, error) {
 		return !isRevoked, errors.Wrap(err, "failed to get bitcoin bridge address")
 	}
 
-	// do not change config if party is revoked, just return
-	if isRevoked {
-		return false, nil
-	}
-
+	fmt.Println("Waiting for 15 minutes for new epoch to start")
 	return true, errors.Wrap(t.updateConfigAfterResharing(epoch, blockTime.Add(15*time.Minute), utxoChains), "failed to update config after start")
 }
 

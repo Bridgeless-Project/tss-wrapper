@@ -143,6 +143,7 @@ func (o *Orchestrator) Run(ctx context.Context) error {
 
 			o.logger.WithField("task_id", taskID).Info("stopped process before executing task")
 			startDefaultMode, err := task.Execute(ctx)
+			fmt.Println("Task execution finished with startDefaultMode =", startDefaultMode)
 			if err != nil {
 				o.updateTaskFailed(taskID, err)
 				o.logger.WithError(err).
@@ -165,6 +166,7 @@ func (o *Orchestrator) Run(ctx context.Context) error {
 					return errors.Wrap(err, "failed to kill api process")
 				}
 			}
+			fmt.Println("UpdateStatus to completed")
 
 			// Update task status to Completed
 			if err = o.tasksDb.UpdateStatus(taskID, grpcTypes.ProcessStatus_PROCESS_STATUS_COMPLETED); err != nil {
