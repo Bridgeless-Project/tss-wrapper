@@ -141,6 +141,7 @@ func (t Task) MarshalData() (string, error) {
 		EpochId:   t.EpochId,
 		TssInfo:   t.TssInfo,
 		StartTime: t.StartTime.Unix(),
+		Threshold: t.Threshold,
 	}
 	bytes, err := json.Marshal(data)
 	if err != nil {
@@ -157,6 +158,7 @@ func (t *Task) UnmarshalData(data string) error {
 	t.EpochId = td.EpochId
 	t.TssInfo = td.TssInfo
 	t.StartTime = time.Unix(td.StartTime, 0)
+	t.Threshold = td.Threshold
 	return nil
 }
 
@@ -205,7 +207,7 @@ func (t Task) Execute(ctx context.Context) (bool, error) {
 		func() error {
 			epoch, err = helpers.GetEpochState(ctx, t.EpochId, t.GRPCCore)
 			if epoch.Status != bridgetypes.EpochStatus_RUNNING {
-				return errors.New("epoch is not running yet")
+				return errors.New(fmt.Sprintf("epoch %d is not running yet", t.EpochId))
 			}
 			return err
 		},
@@ -213,7 +215,7 @@ func (t Task) Execute(ctx context.Context) (bool, error) {
 	)
 
 	if err != nil {
-		return !isRevoked, errors.Wrap(err, "failed to get epoch state")
+		return !isRevoked, errors.Wrap(err, fmt.Sprintf("failed to get epoch %d state", t.EpochId))
 	}
 
 	err = retry.Do(
@@ -248,7 +250,7 @@ func (t Task) Execute(ctx context.Context) (bool, error) {
 		return true, nil
 	}
 
-	return true, errors.Wrap(t.updateConfigAfterResharing(epoch, blockTime.Add(5*time.Minute), utxoChains), "failed to update config after start")
+	return true, errors.Wrap(t.updateConfigAfterResharing(epoch, blockTime.Add(15*time.Minute), utxoChains), "failed to update config after start")
 }
 
 func (t Task) isNewParty() bool {
