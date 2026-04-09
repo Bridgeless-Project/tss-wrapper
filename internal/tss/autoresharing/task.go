@@ -247,7 +247,7 @@ func (t Task) Execute(ctx context.Context) (bool, error) {
 
 	// do not change config if party is revoked, just return
 	if isRevoked {
-		return true, nil
+		return false, nil
 	}
 
 	return true, errors.Wrap(t.updateConfigAfterResharing(epoch, blockTime.Add(15*time.Minute), utxoChains), "failed to update config after start")
