@@ -191,15 +191,14 @@ func (t Task) Execute(ctx context.Context) (bool, error) {
 	}
 	fmt.Println("Resharing completed, updating config with new epoch info")
 
-	// USE DEFAULT RETRY OPTIONS FOR ALL PARTIES
 	opt := make([]retry.Option, 0)
-	//if t.isNewParty() {
-	//	fmt.Println("Waiting for new party to be active")
-	//	opt = append(opt,
-	//		retry.Delay(40*time.Second),
-	//		retry.Attempts(120),
-	//	)
-	//}
+	if t.isNewParty() { // new parties take a part only first session
+		fmt.Println("Waiting for new party to be active")
+		opt = append(opt,
+			retry.Delay(1*time.Minute),
+			retry.Attempts(120),
+		)
+	}
 
 	// do not change config if party is revoked, just return
 	if isRevoked {
