@@ -93,10 +93,6 @@ func runService(ctx context.Context, cfg config.Config) error {
 		if err != nil {
 			return errors.Wrap(err, fmt.Sprintf("failed to create task for event %s", eventCfg.Event))
 		}
-		if task.GetTime().Unix() <= time.Now().Unix() && task.GetTaskType() == autoresharing.TaskType {
-			logger.Warnf("Skipping task for event %s as it's in the past", eventCfg.Event)
-			continue
-		}
 
 		if eventCfg.PreStart {
 			logger.Debugf("Adding task for event %s as pre-start task", eventCfg.Event)
@@ -166,6 +162,10 @@ func loadIncompleteTasks(
 				WithField("task_id", record.ID).
 				WithField("task_type", record.TaskType).
 				Error("failed to restore task from database, skipping")
+			continue
+		}
+		if task.GetTime().Unix() <= time.Now().Unix() && task.GetTaskType() == autoresharing.TaskType {
+			logger.Warnf("Skipping task for event %s as it's in the past", task.GetTaskType())
 			continue
 		}
 

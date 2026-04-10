@@ -132,7 +132,6 @@ func (o *Observer) getCurrentHeight(ctx context.Context) (int64, error) {
 
 func (o *Observer) handleBlock(ctx context.Context, height *int64) error {
 	var blockResult *coretypes.ResultBlockResults
-	fmt.Println("handleBlock called for height: ", *height)
 	getBlockResult := func() error {
 		var err error
 		blockResult, err = o.client.BlockResults(ctx, height)
@@ -170,12 +169,10 @@ func (o *Observer) handleEventFromTxResults(txs []*abciTypes.ResponseDeliverTx) 
 		}
 		for _, msg := range msgs {
 			for _, event := range msg.Events {
-				fmt.Println("event.Type: ", event.Type)
 				taskType, ok := o.events[event.Type]
 				if !ok {
 					continue
 				}
-				fmt.Println("taskType: ", taskType)
 				task, err := taskType.Parse(event.Attributes)
 				if err != nil {
 					return errors.Wrap(err, fmt.Sprintf("Failed to parse event attributes: %v", event.Attributes))
