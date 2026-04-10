@@ -178,7 +178,7 @@ func (o *Orchestrator) Run(ctx context.Context) error {
 			o.logger.WithField("task_id", taskID).Info("task completed successfully")
 
 			if !startDefaultMode {
-				return nil
+				continue
 			}
 
 			if err = o.StartDefaultMode(ctx); err != nil {
