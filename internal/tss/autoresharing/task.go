@@ -87,7 +87,7 @@ func (t Task) Parse(attributes []types.Attribute) (types.Task, error) {
 		HTTPCore: t.HTTPCore,
 		GRPCCore: t.GRPCCore,
 	}
-
+	fmt.Println("Parsing attributes for AutoResharingTask")
 	for _, attribute := range attributes {
 		switch attribute.Key {
 		case bridgetypes.AttributeTssInfo:
@@ -116,6 +116,8 @@ func (t Task) Parse(attributes []types.Attribute) (types.Task, error) {
 			continue
 		}
 	}
+
+	fmt.Println(task)
 	return task, nil
 }
 

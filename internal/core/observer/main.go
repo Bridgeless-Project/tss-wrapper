@@ -87,7 +87,7 @@ func (o *Observer) Run(ctx context.Context, startHeight int64) error {
 
 			if startHeight > currentHeight {
 				//TODO: unlock
-				//o.logger.WithField("currentHeight", currentHeight).Debug("waiting for next block")
+				o.logger.WithField("currentHeight", currentHeight).Debug("waiting for next block")
 				continue
 			}
 
@@ -132,11 +132,12 @@ func (o *Observer) getCurrentHeight(ctx context.Context) (int64, error) {
 
 func (o *Observer) handleBlock(ctx context.Context, height *int64) error {
 	var blockResult *coretypes.ResultBlockResults
-
+	fmt.Println("handleBlock called for height: ", *height)
 	getBlockResult := func() error {
 		var err error
 		blockResult, err = o.client.BlockResults(ctx, height)
 		if err != nil {
+			fmt.Println("Error getting block results: ", err)
 			return errors.Wrap(err, "failed to get block results")
 		}
 
@@ -169,10 +170,12 @@ func (o *Observer) handleEventFromTxResults(txs []*abciTypes.ResponseDeliverTx) 
 		}
 		for _, msg := range msgs {
 			for _, event := range msg.Events {
+				fmt.Println("event.Type: ", event.Type)
 				taskType, ok := o.events[event.Type]
 				if !ok {
 					continue
 				}
+				fmt.Println("taskType: ", taskType)
 				task, err := taskType.Parse(event.Attributes)
 				if err != nil {
 					return errors.Wrap(err, fmt.Sprintf("Failed to parse event attributes: %v", event.Attributes))
