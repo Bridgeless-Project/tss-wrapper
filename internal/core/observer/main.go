@@ -87,7 +87,6 @@ func (o *Observer) Run(ctx context.Context, startHeight int64) error {
 
 			if startHeight > currentHeight {
 				//TODO: unlock
-				o.logger.WithField("currentHeight", currentHeight).Debug("waiting for next block")
 				continue
 			}
 
