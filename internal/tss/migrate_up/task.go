@@ -116,6 +116,7 @@ func (t Task) Execute(ctx context.Context) (bool, error) {
 		"service",
 		"migrate",
 		"up",
+		"--config", t.ConfigPath,
 	}
 
 	cmd := exec.CommandContext(ctx, t.BinaryPath, args...)
