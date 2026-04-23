@@ -5,7 +5,7 @@ import (
 
 	bridgetypes "github.com/Bridgeless-Project/bridgeless-core/v12/x/bridge/types"
 	"github.com/cosmos/gogoproto/grpc"
-	"gitlab.com/distributed_lab/logan/v3/errors"
+	"github.com/pkg/errors"
 )
 
 func GetEpochState(ctx context.Context, epochID uint32, connection grpc.ClientConn) (*bridgetypes.Epoch, error) {
@@ -13,11 +13,11 @@ func GetEpochState(ctx context.Context, epochID uint32, connection grpc.ClientCo
 		EpochId: epochID,
 	})
 	if err != nil {
-		return nil, errors.Wrap(err, "could not get epoch")
-	}
+		if errors.Is(err, bridgetypes.ErrEpochNotFound.GRPCStatus().Err()) {
+			return nil, errors.New("epoch not found")
+		}
 
-	if epoch == nil {
-		return nil, errors.New("epoch not found")
+		return nil, errors.Wrap(err, "failed to get epoch state")
 	}
 
 	return &epoch.Epoch, nil

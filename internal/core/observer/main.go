@@ -135,7 +135,6 @@ func (o *Observer) handleBlock(ctx context.Context, height *int64) error {
 		var err error
 		blockResult, err = o.client.BlockResults(ctx, height)
 		if err != nil {
-			fmt.Println("Error getting block results: ", err)
 			return errors.Wrap(err, "failed to get block results")
 		}
 

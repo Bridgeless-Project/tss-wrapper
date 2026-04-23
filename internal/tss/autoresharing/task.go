@@ -87,7 +87,6 @@ func (t Task) Parse(attributes []types.Attribute) (types.Task, error) {
 		HTTPCore: t.HTTPCore,
 		GRPCCore: t.GRPCCore,
 	}
-	fmt.Println("Parsing attributes for AutoResharingTask")
 	for _, attribute := range attributes {
 		switch attribute.Key {
 		case bridgetypes.AttributeTssInfo:
@@ -170,11 +169,9 @@ func (t Task) Execute(ctx context.Context) (bool, error) {
 		return !isRevoked, errors.New("binary path is not set")
 	}
 
-	fmt.Println("Update resharing params")
 	if err := t.updateConfigBeforeResharing(); err != nil {
 		return !isRevoked, errors.Wrap(err, "failed to update parties config")
 	}
-	fmt.Println("Start resharing")
 
 	args := []string{
 		"service",
@@ -191,11 +188,9 @@ func (t Task) Execute(ctx context.Context) (bool, error) {
 	if err := cmd.Run(); err != nil {
 		return !isRevoked, errors.Wrap(err, "failed to execute resharing task")
 	}
-	fmt.Println("Resharing completed, updating config with new epoch info")
 
 	opt := make([]retry.Option, 0)
 	if t.isNewParty() { // new parties take a part only first session
-		fmt.Println("Waiting for new party to be active")
 		opt = append(opt,
 			retry.Delay(1*time.Minute),
 			retry.Attempts(120),
@@ -204,7 +199,6 @@ func (t Task) Execute(ctx context.Context) (bool, error) {
 
 	// do not change config if party is revoked, just return
 	if isRevoked {
-		fmt.Println("Party is revoked, skipping config update")
 		return false, nil
 	}
 
@@ -217,7 +211,6 @@ func (t Task) Execute(ctx context.Context) (bool, error) {
 
 	err = retry.Do(
 		func() error {
-			fmt.Println(fmt.Sprintf("Waiting for epoch %d to start", t.EpochId))
 			epoch, err = helpers.GetEpochState(ctx, t.EpochId, t.GRPCCore)
 			if epoch.Status != bridgetypes.EpochStatus_RUNNING {
 				return errors.New(fmt.Sprintf("epoch %d is not running yet", t.EpochId))
@@ -228,12 +221,11 @@ func (t Task) Execute(ctx context.Context) (bool, error) {
 	)
 
 	if err != nil {
-		return !isRevoked, errors.Wrap(err, fmt.Sprintf("failed to get epoch %d state", t.EpochId))
+		return false, errors.Wrap(err, fmt.Sprintf("failed to get epoch %d state", t.EpochId))
 	}
 
 	err = retry.Do(
 		func() error {
-			fmt.Println("Waiting for blocktime")
 			height := int64(epoch.FinalizedBlock)
 			block, err := t.HTTPCore.Block(ctx, &height)
 			if err != nil {
@@ -245,22 +237,20 @@ func (t Task) Execute(ctx context.Context) (bool, error) {
 		opt...,
 	)
 	if err != nil {
-		return !isRevoked, errors.Wrap(err, "failed to get blocktime ")
+		return false, errors.Wrap(err, "failed to get blocktime ")
 	}
 
 	err = retry.Do(
 		func() error {
-			fmt.Println("Waiting for bitcoin bridge address")
 			utxoChains, err = helpers.GetChains(ctx, bridgetypes.ChainType_BITCOIN, t.GRPCCore)
 			return err
 		},
 		opt...,
 	)
 	if err != nil {
-		return !isRevoked, errors.Wrap(err, "failed to get bitcoin bridge address")
+		return false, errors.Wrap(err, "failed to get bitcoin bridge address")
 	}
 
-	fmt.Println("Waiting for 15 minutes for new epoch to start")
 	return true, errors.Wrap(t.updateConfigAfterResharing(epoch, blockTime.Add(15*time.Minute), utxoChains), "failed to update config after start")
 }
 

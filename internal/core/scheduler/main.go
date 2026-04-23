@@ -62,8 +62,7 @@ func (s *Scheduler) handleIncomingTasks(ctx context.Context) {
 					Error("failed to update task status to planned")
 			}
 
-			s.tasksWaitGroup.Add(1)
-			go task.StartScheduling(ctx, s.readyTasks)
+			s.ScheduleTask(ctx, task)
 		}
 	}
 }

@@ -1,7 +1,7 @@
 package config
 
 import (
-	"strings"
+	"crypto/tls"
 	"time"
 
 	"github.com/pkg/errors"
@@ -10,6 +10,7 @@ import (
 	"gitlab.com/distributed_lab/kit/comfig"
 	"gitlab.com/distributed_lab/kit/kv"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"
 )
@@ -44,18 +45,19 @@ func (t *tenderminter) TendermintHttpClient() *http.HTTP {
 
 func (t *tenderminter) TendermintGrpcClient() *grpc.ClientConn {
 	cfg := t.config()
-	// TODO: uncomment after tests
-	//tlsConfig := &tls.Config{
-	//	InsecureSkipVerify: false,
-	//	//InsecureSkipVerify: !isHTTPS(cfg.GRPC),
-	//}
 
-	con, err := grpc.Dial(cfg.GRPC, grpc.WithTransportCredentials(insecure.NewCredentials()), grpc.WithKeepaliveParams(keepalive.ClientParameters{
+	keepaliveOpts := grpc.WithKeepaliveParams(keepalive.ClientParameters{
 		Time:    10 * time.Second,
 		Timeout: 20 * time.Second,
-	}))
+	})
+	securityOpts := grpc.WithTransportCredentials(insecure.NewCredentials())
+	if cfg.EnableTLS {
+		securityOpts = grpc.WithTransportCredentials(credentials.NewTLS(&tls.Config{MinVersion: tls.VersionTLS13}))
+	}
+
+	con, err := grpc.NewClient(cfg.GRPC, securityOpts, keepaliveOpts)
 	if err != nil {
-		panic(errors.Wrap(err, "failed to create tendermint grpc client"))
+		panic(errors.Wrap(err, "failed to connect to Tendermint via gRPC"))
 	}
 
 	return con
@@ -68,8 +70,9 @@ func NewTendermintConnector(getter kv.Getter) TendermintConnector {
 }
 
 type tenderminterCfg struct {
-	RPC  string `fig:"tendermint_rpc,required"`
-	GRPC string `fig:"tendermint_grpc,required"`
+	RPC       string `fig:"tendermint_rpc,required"`
+	GRPC      string `fig:"tendermint_grpc,required"`
+	EnableTLS bool   `fig:"enable_tls"`
 }
 
 func (t *tenderminter) config() *tenderminterCfg {
@@ -81,8 +84,4 @@ func (t *tenderminter) config() *tenderminterCfg {
 		}
 		return &cfg
 	}).(*tenderminterCfg)
-}
-
-func isHTTPS(domen string) bool {
-	return strings.HasPrefix(domen, "https:")
 }

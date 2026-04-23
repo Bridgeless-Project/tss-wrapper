@@ -2,7 +2,6 @@ package api
 
 import (
 	"context"
-	"errors"
 	"net"
 	"net/http"
 	"time"
@@ -17,9 +16,9 @@ import (
 	types "github.com/Bridgeless-Project/tss-wrapper-svc/resources"
 	"github.com/go-chi/chi/v5"
 	"github.com/grpc-ecosystem/grpc-gateway/v2/runtime"
+	"github.com/pkg/errors"
 	"gitlab.com/distributed_lab/ape"
 	"gitlab.com/distributed_lab/logan/v3"
-	errors2 "gitlab.com/distributed_lab/logan/v3/errors"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
 
@@ -110,7 +109,7 @@ func (s *Server) httpRouter(ctxt context.Context) (http.Handler, error) {
 	err := types.RegisterAPIHandlerServer(ctxt, grpcGatewayRouter, srvgrpc.Implementation{})
 	if err != nil {
 
-		return nil, errors2.Wrap(err, "failed to regiser api handler")
+		return nil, errors.Wrap(err, "failed to register api handler")
 	}
 
 	router.Mount("/", grpcGatewayRouter)
