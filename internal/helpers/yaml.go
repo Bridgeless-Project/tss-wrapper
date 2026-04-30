@@ -12,8 +12,9 @@ import (
 )
 
 const (
-	ResharingKey = "resharing"
-	PartiesKey   = "parties"
+	ResharingKey     = "resharing"
+	PartiesKey       = "parties"
+	PrevEpochDataKey = "prev_epoch_data"
 )
 
 const (
@@ -28,6 +29,7 @@ const (
 	keyChainId          = "id"
 	keyPRC              = "rpc"
 	keyWallet           = "wallet"
+	keyWallets          = "wallets"
 	keyHost             = "host"
 	keyBridgeAddress    = "bridge_addresses"
 )
@@ -218,16 +220,71 @@ func (c *ConfigManager) GetResharingParties() ([]types.Party, error) {
 	return parties, nil
 }
 
+type PrevEpochParams struct {
+	Threshold         uint32
+	Parties           []types.Party
+	BitcoinChainsData map[string]BitcoinChainData
+}
+
+type BitcoinChainData struct {
+	NewBridgeAddress string
+	OldWalletName    string
+}
+
+func (c *ConfigManager) SetPrevEpochParams(params PrevEpochParams) {
+	prevEpochMap, ok := c.rawConfig[PrevEpochDataKey].(map[string]interface{})
+	if !ok {
+		prevEpochMap = make(map[string]interface{})
+		c.rawConfig[PrevEpochDataKey] = prevEpochMap
+	}
+
+	prevEpochMap[keyThreshold] = params.Threshold
+	prevEpochMap[PartiesKey] = map[string]interface{}{
+		keyPartiesList: partiesToListRaw(params.Parties),
+	}
+
+	walletsMap := make(map[string]interface{}, len(params.BitcoinChainsData))
+	for chainId, chainData := range params.BitcoinChainsData {
+		walletsMap[chainId] = map[string]interface{}{
+			"new_bridge_address": chainData.NewBridgeAddress,
+			"old_wallet_name":    chainData.OldWalletName,
+		}
+	}
+	prevEpochMap[keyWallets] = walletsMap
+}
+
+func (c *ConfigManager) GetPrevEpochParams() (PrevEpochParams, error) {
+	//prevEpochMap, ok := c.rawConfig[PrevEpochDataKey].(map[string]interface{})
+	//if !ok {
+	//	return PrevEpochParams{}, errors.New("invalid prev epoch data format")
+	//}
+
+	return PrevEpochParams{}, nil
+	//threshold, ok := prevEpochMap[keyThreshold].(uint32)
+	//if !ok {
+	//	return PrevEpochParams{}, errors.New("invalid threshold format")
+	//}
+	//partiesMap, ok := prevEpochMap[PartiesKey].(map[string]interface{})
+	//if !ok {
+	//	return PrevEpochParams{}, errors.New("invalid parties format")
+	//}
+}
+
+type WalletBridgeAddressData struct {
+	Address    string
+	ReplaceAll bool
+}
+
 // -------------------CHAINS-------------------
-func (c *ConfigManager) UpdateBitcoinWallet(address string, epoch uint32, chainId string) error {
+func (c *ConfigManager) UpdateBitcoinWallet(walletName, chainId string, address ...WalletBridgeAddressData) (string, error) {
 	partiesMap, ok := c.rawConfig[keyChains].(map[string]interface{})
 	if !ok {
-		return errors.New("invalid chains format")
+		return "", errors.New("invalid chains format")
 	}
 
 	listSlice, ok := partiesMap[keyPartiesList].([]interface{})
 	if !ok {
-		return errors.New("invalid parties list format")
+		return "", errors.New("invalid parties list format")
 	}
 
 	for _, chain := range listSlice {
@@ -241,19 +298,28 @@ func (c *ConfigManager) UpdateBitcoinWallet(address string, epoch uint32, chainI
 		}
 
 		chainMap[keyChainId] = chainId
+		rpc := chainMap[keyPRC].(map[string]interface{})
+		wallet := rpc[keyWallet].(map[string]interface{})
+		oldWalletHost := wallet[keyHost].(string)
+		hostParts := strings.SplitAfter(oldWalletHost, "/wallet")
+		wallet[keyHost] = fmt.Sprintf("%s/%s", hostParts[0], walletName)
+
+		if len(address) == 0 {
+			return oldWalletHost, nil
+		}
 		bridgeAddresses := chainMap[keyBridgeAddress].([]interface{})
-		bridgeAddresses = append(bridgeAddresses, address)
+		if address[0].ReplaceAll {
+			bridgeAddresses = []interface{}{address}
+		} else {
+			bridgeAddresses = append(bridgeAddresses, address)
+		}
 
 		chainMap[keyBridgeAddress] = bridgeAddresses
 
-		rpc := chainMap[keyPRC].(map[string]interface{})
-		wallet := rpc[keyWallet].(map[string]interface{})
-		host := wallet[keyHost].(string)
-		hostParts := strings.SplitAfter(host, "/wallet")
-		wallet[keyHost] = fmt.Sprintf("%s/%d_%s", hostParts[0], epoch, address)
+		return oldWalletHost, nil
 	}
 
-	return nil
+	return "", errors.New("chain not found")
 }
 
 // ------------------ START TIME ------------------
@@ -268,4 +334,21 @@ func (c *ConfigManager) SetStartInfo(timestamp time.Time, threshold uint32) erro
 	tssMap[keyThreshold] = threshold
 
 	return nil
+}
+
+func partiesToListRaw(parties []types.Party) []interface{} {
+	var listRaw []interface{}
+	for _, p := range parties {
+		listRaw = append(listRaw, map[string]interface{}{
+			"connection":           p.Connection,
+			"core_address":         p.CoreAddress,
+			"tls_certificate_path": p.TLSCertificatePath,
+		})
+	}
+
+	return listRaw
+}
+
+func partiesFromListRaw(listRaw []interface{}) ([]types.Party, error) {
+	return nil, nil
 }
