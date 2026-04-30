@@ -76,12 +76,6 @@ func (o *Orchestrator) Stop() error {
 		return nil
 	}
 
-	if o.coreCmd.ProcessState.Exited() {
-		o.logger.Warn("process exited before stop was called")
-		o.coreCmd = nil
-		return nil
-	}
-
 	if err := o.coreCmd.Process.Signal(syscall.SIGTERM); err != nil {
 		return errors.Wrap(err, "failed to kill process")
 	}
