@@ -152,6 +152,13 @@ func (o *Orchestrator) Run(ctx context.Context) error {
 					WithField("task_id", taskID).
 					Error("task execution failed")
 
+				// kill api before start the default mode
+				if o.apiCmd != nil {
+					if err = o.apiCmd.Process.Signal(syscall.SIGTERM); err != nil {
+						return errors.Wrap(err, "failed to kill api process")
+					}
+				}
+
 				// Continue running, start default mode again
 				if startDefaultMode {
 					if err = o.StartDefaultMode(ctx); err != nil {

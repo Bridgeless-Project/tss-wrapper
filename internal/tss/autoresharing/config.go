@@ -77,13 +77,13 @@ func (t Task) determinePartiesConfig(currentParties []types.Party) ([]types.Part
 			if tssInfo.Address == t.CoreAddress {
 				continue
 			}
-			certPath, err := t.storeCertificate(tssInfo.Domen, tssInfo.Certificate)
+			certPath, err := t.storeCertificate(tssInfo.Domain, tssInfo.Certificate)
 			if err != nil {
-				return nil, errors.Wrap(err, fmt.Sprintf("failed to store certificate for %s", tssInfo.Domen))
+				return nil, errors.Wrap(err, fmt.Sprintf("failed to store certificate for %s", tssInfo.Domain))
 			}
 
 			partyMap[tssInfo.Address] = types.Party{
-				Connection:         tssInfo.Domen,
+				Connection:         tssInfo.Domain,
 				CoreAddress:        tssInfo.Address,
 				TLSCertificatePath: certPath,
 			}
