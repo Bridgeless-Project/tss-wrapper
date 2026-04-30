@@ -53,6 +53,9 @@ func (o *Orchestrator) StartDefaultMode(ctx context.Context) error {
 
 	if isApiNeeded {
 		o.apiCmd = exec.CommandContext(ctx, o.binaryPath, o.apiParams...)
+		o.apiCmd.Stdout = os.Stdout
+		o.apiCmd.Stderr = os.Stderr
+
 		if err := o.apiCmd.Start(); err != nil {
 			return errors.Wrap(err, "failed to start api")
 		}
