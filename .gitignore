@@ -2,3 +2,4 @@ config.yaml
 .idea
 binary
 vendor
+.DS_Store
