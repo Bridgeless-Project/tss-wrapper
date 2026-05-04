@@ -53,6 +53,9 @@ func (o *Orchestrator) StartDefaultMode(ctx context.Context) error {
 
 	if isApiNeeded {
 		o.apiCmd = exec.CommandContext(ctx, o.binaryPath, o.apiParams...)
+		o.apiCmd.Stdout = os.Stdout
+		o.apiCmd.Stderr = os.Stderr
+
 		if err := o.apiCmd.Start(); err != nil {
 			return errors.Wrap(err, "failed to start api")
 		}
@@ -70,12 +73,6 @@ func (o *Orchestrator) StartDefaultMode(ctx context.Context) error {
 func (o *Orchestrator) Stop() error {
 	if o.coreCmd == nil || o.coreCmd.Process == nil {
 		o.logger.Warn("no process to stop")
-		return nil
-	}
-
-	if o.coreCmd.ProcessState.Exited() {
-		o.logger.Warn("process exited before stop was called")
-		o.coreCmd = nil
 		return nil
 	}
 
@@ -154,6 +151,13 @@ func (o *Orchestrator) Run(ctx context.Context) error {
 				o.logger.WithError(err).
 					WithField("task_id", taskID).
 					Error("task execution failed")
+
+				// kill api before start the default mode
+				if o.apiCmd != nil {
+					if err = o.apiCmd.Process.Signal(syscall.SIGTERM); err != nil {
+						return errors.Wrap(err, "failed to kill api process")
+					}
+				}
 
 				// Continue running, start default mode again
 				if startDefaultMode {
