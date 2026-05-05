@@ -20,7 +20,6 @@ const (
 const (
 	keyChains           = "chains"
 	keyPartiesList      = "list"
-	keyChainType        = "type"
 	keyIsNewParticipant = "new_participant"
 	keyEpoch            = "epoch"
 	keyTss              = "tss"
@@ -32,6 +31,10 @@ const (
 	keyWallets          = "wallets"
 	keyHost             = "host"
 	keyBridgeAddress    = "bridge_addresses"
+)
+
+var (
+	ErrOldEpochDataNotFound = errors.New("no data found for previous epoch")
 )
 
 type ConfigManager struct {
@@ -81,6 +84,26 @@ func (c *ConfigManager) GetThreshold() (uint32, error) {
 	}
 
 	return tssMap[keyThreshold].(uint32), nil
+}
+
+func (c *ConfigManager) SetThreshold(threshold uint32) {
+	tssMap, ok := c.rawConfig[keyTss].(map[string]interface{})
+	if !ok {
+		tssMap = make(map[string]interface{})
+		c.rawConfig[keyTss] = tssMap
+	}
+
+	tssMap[keyThreshold] = threshold
+}
+
+func (c *ConfigManager) SetStartTime(startTime time.Time) {
+	tssMap, ok := c.rawConfig[keyTss].(map[string]interface{})
+	if !ok {
+		tssMap = make(map[string]interface{})
+		c.rawConfig[keyTss] = tssMap
+	}
+
+	tssMap[keyStartTime] = startTime
 }
 
 // -------------------PARTIES---------------------
@@ -254,20 +277,52 @@ func (c *ConfigManager) SetPrevEpochParams(params PrevEpochParams) {
 }
 
 func (c *ConfigManager) GetPrevEpochParams() (PrevEpochParams, error) {
-	//prevEpochMap, ok := c.rawConfig[PrevEpochDataKey].(map[string]interface{})
-	//if !ok {
-	//	return PrevEpochParams{}, errors.New("invalid prev epoch data format")
-	//}
+	params := PrevEpochParams{}
+	prevEpochMap, ok := c.rawConfig[PrevEpochDataKey].(map[string]interface{})
+	if !ok {
+		return params, ErrOldEpochDataNotFound
+	}
+	params.Threshold, ok = prevEpochMap[keyThreshold].(uint32)
+	if !ok {
+		return params, errors.New("invalid threshold format")
+	}
 
-	return PrevEpochParams{}, nil
-	//threshold, ok := prevEpochMap[keyThreshold].(uint32)
-	//if !ok {
-	//	return PrevEpochParams{}, errors.New("invalid threshold format")
-	//}
-	//partiesMap, ok := prevEpochMap[PartiesKey].(map[string]interface{})
-	//if !ok {
-	//	return PrevEpochParams{}, errors.New("invalid parties format")
-	//}
+	partiesMap, ok := prevEpochMap[PartiesKey].(map[string]interface{})
+	if !ok {
+		return params, errors.New("invalid parties format")
+	}
+	listSlice, ok := partiesMap[keyPartiesList].([]interface{})
+	if !ok {
+		return params, errors.New("invalid parties list format")
+	}
+	params.Parties = partiesFromListRaw(listSlice)
+
+	walletsMap, ok := prevEpochMap[keyWallets].(map[string]interface{})
+	if !ok {
+		return params, errors.New("invalid wallets format")
+	}
+
+	params.BitcoinChainsData = make(map[string]BitcoinChainData, len(walletsMap))
+	for chainId, walletData := range walletsMap {
+		walletDataMap, ok := walletData.(map[string]interface{})
+		if !ok {
+			return params, errors.New("invalid wallet data format")
+		}
+		newBridgeAddress, ok := walletDataMap["new_bridge_address"].(string)
+		if !ok || newBridgeAddress == "" {
+			return params, errors.New("invalid new bridge address format")
+		}
+		oldWalletName, ok := walletDataMap["old_wallet_name"].(string)
+		if !ok || oldWalletName == "" {
+			return params, errors.New("invalid old wallet name format")
+		}
+		params.BitcoinChainsData[chainId] = BitcoinChainData{
+			NewBridgeAddress: newBridgeAddress,
+			OldWalletName:    oldWalletName,
+		}
+	}
+
+	return params, nil
 }
 
 type WalletBridgeAddressData struct {
@@ -349,6 +404,26 @@ func partiesToListRaw(parties []types.Party) []interface{} {
 	return listRaw
 }
 
-func partiesFromListRaw(listRaw []interface{}) ([]types.Party, error) {
-	return nil, nil
+func partiesFromListRaw(listRaw []interface{}) []types.Party {
+	var parties []types.Party
+	for _, item := range listRaw {
+		itemMap, ok := item.(map[string]interface{})
+		if !ok {
+			continue
+		}
+
+		party := types.Party{}
+		if conn, ok := itemMap["connection"].(string); ok {
+			party.Connection = conn
+		}
+		if addr, ok := itemMap["core_address"].(string); ok {
+			party.CoreAddress = addr
+		}
+		if cert, ok := itemMap["tls_certificate_path"].(string); ok {
+			party.TLSCertificatePath = cert
+		}
+		parties = append(parties, party)
+	}
+
+	return parties
 }
