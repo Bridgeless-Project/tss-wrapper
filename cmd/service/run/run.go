@@ -7,7 +7,7 @@ import (
 	"syscall"
 	"time"
 
-	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/tss/autoresharing/migration"
+	resharingMigration "github.com/Bridgeless-Project/tss-wrapper-svc/internal/tss/autoresharing/migration"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/tss/autoresharing/reshare"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/tss/timechanger"
 
@@ -199,7 +199,7 @@ func createTask(taskType config.TaskType, cfg config.Config) (types.Task, error)
 			cfg.TendermintHttpClient(),
 		), nil
 	case config.TaskTypeAutoResharingMigration:
-		return migration.NewTask(
+		return resharingMigration.NewTask(
 			cfg.TSSConfig(),
 			cfg.TendermintGrpcClient(),
 			cfg.TendermintHttpClient(),
@@ -230,8 +230,8 @@ func createTaskFromRecord(record db.TaskRecord, cfg config.Config) (types.Task, 
 			return nil, errors.Wrap(err, "failed to unmarshal autoresharing task data")
 		}
 		task = t
-	case migration.TaskType:
-		t := migration.NewTask(
+	case resharingMigration.TaskType:
+		t := resharingMigration.NewTask(
 			cfg.TSSConfig(),
 			cfg.TendermintGrpcClient(),
 			cfg.TendermintHttpClient(),

@@ -12,9 +12,11 @@ import (
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/config"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/helpers"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/types"
+	"github.com/avast/retry-go"
 	"github.com/cosmos/gogoproto/grpc"
 	"github.com/pkg/errors"
 	"github.com/tendermint/tendermint/rpc/client/http"
+	coretypes "github.com/tendermint/tendermint/rpc/core/types"
 )
 
 const TaskType = "auto_resharing_migration"
@@ -135,19 +137,39 @@ func (t *Task) UnmarshalData(data string) error {
 }
 
 func (t *Task) Execute(ctx context.Context) (bool, error) {
-	oldEpoch, err := helpers.GetEpochState(ctx, t.EpochId, t.GRPCCore)
-	if err != nil {
-		return false, errors.Wrap(err, "failed to get old epoch info")
+	retryOpts := []retry.Option{
+		retry.Attempts(3),
+		retry.Delay(5 * time.Second),
 	}
 
-	height := int64(oldEpoch.FinalizedBlock)
-	block, err := t.HTTPCore.Block(ctx, &height)
-	if err != nil {
-		return false, errors.Wrap(err, "failed to get finalized block info")
+	var (
+		oldEpoch            *bridgetypes.Epoch
+		migrationEventBlock *coretypes.ResultBlock
+		err                 error
+	)
+
+	if err = retry.Do(
+		func() error {
+			oldEpoch, err = helpers.GetEpochState(ctx, t.EpochId, t.GRPCCore)
+			return errors.Wrap(err, "failed to get old epoch info")
+		},
+		retryOpts...,
+	); err != nil {
+		return false, err
 	}
 
-	// TODO: how to estimate start time?
-	migrationSessionStartTime := block.Block.Time.Add(time.Minute)
+	if err = retry.Do(
+		func() error {
+			height := int64(oldEpoch.FinalizedBlock)
+			migrationEventBlock, err = t.HTTPCore.Block(ctx, &height)
+			return errors.Wrap(err, "failed to get finalized block info")
+		},
+		retryOpts...,
+	); err != nil {
+		return false, err
+	}
+
+	migrationSessionStartTime := migrationEventBlock.Block.Time.Add(5 * time.Minute)
 	nextSessionStartTime := migrationSessionStartTime.Add(time.Hour)
 
 	// check if party is a member of the old epoch, if not, we can skip the migration
@@ -169,9 +191,15 @@ func (t *Task) Execute(ctx context.Context) (bool, error) {
 		return err == nil, errors.Wrap(err, "failed to save config with new start time")
 	}
 
-	utxoChains, err := helpers.GetChains(ctx, bridgetypes.ChainType_BITCOIN, t.GRPCCore)
-	if err != nil {
-		return false, errors.Wrap(err, "failed to get utxo chains")
+	var utxoChains []bridgetypes.Chain
+	if err = retry.Do(
+		func() error {
+			utxoChains, err = helpers.GetChains(ctx, bridgetypes.ChainType_BITCOIN, t.GRPCCore)
+			return errors.Wrap(err, "failed to get utxo chains")
+		},
+		retryOpts...,
+	); err != nil {
+		return false, err
 	}
 
 	if err = t.updateConfigBeforeExecution(migrationSessionStartTime, utxoChains); err != nil {
@@ -192,14 +220,29 @@ func (t *Task) Execute(ctx context.Context) (bool, error) {
 		return false, errors.Wrap(err, "failed to execute resharing task")
 	}
 
-	params, err := helpers.GetParams(ctx, t.GRPCCore)
-	if err != nil {
-		return false, errors.Wrap(err, "failed to get bridge params")
+	var (
+		params           *bridgetypes.Params
+		currentEpochInfo *bridgetypes.Epoch
+	)
+
+	if err = retry.Do(
+		func() error {
+			params, err = helpers.GetParams(ctx, t.GRPCCore)
+			return errors.Wrap(err, "failed to get bridge params")
+		},
+		retryOpts...,
+	); err != nil {
+		return false, err
 	}
 
-	currentEpochInfo, err := helpers.GetEpochState(ctx, params.Epoch, t.GRPCCore)
-	if err != nil {
-		return false, errors.Wrap(err, "failed to get current epoch info")
+	if err = retry.Do(
+		func() error {
+			currentEpochInfo, err = helpers.GetEpochState(ctx, params.Epoch, t.GRPCCore)
+			return errors.Wrap(err, "failed to get current epoch info")
+		},
+		retryOpts...,
+	); err != nil {
+		return false, err
 	}
 
 	// check party is a member of the new epoch, if not, we can skip the config update after execution
