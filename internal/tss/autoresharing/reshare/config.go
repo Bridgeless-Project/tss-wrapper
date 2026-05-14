@@ -35,7 +35,7 @@ func (t *Task) updateConfigBeforeResharing() error {
 	}
 
 	if !t.isNewParty() {
-		t.PrevEpochData.Parties = newParties
+		t.PrevEpochData.Parties = oldParties
 		t.PrevEpochData.Threshold, err = configer.GetThreshold()
 		if err != nil {
 			return errors.Wrap(err, "failed to get old threshold")

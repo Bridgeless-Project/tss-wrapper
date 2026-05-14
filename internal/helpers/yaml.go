@@ -83,7 +83,14 @@ func (c *ConfigManager) GetThreshold() (uint32, error) {
 		return 0, errors.New("invalid tss format")
 	}
 
-	return tssMap[keyThreshold].(uint32), nil
+	switch threshold := tssMap[keyThreshold].(type) {
+	case int:
+		return uint32(threshold), nil
+	case uint32:
+		return threshold, nil
+	default:
+		return 0, errors.New(fmt.Sprintf("invalid tss threshold type: %s", threshold))
+	}
 }
 
 func (c *ConfigManager) SetThreshold(threshold uint32) {
