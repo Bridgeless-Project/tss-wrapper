@@ -1,4 +1,4 @@
-package autoresharing
+package reshare
 
 import (
 	"context"
@@ -37,6 +37,8 @@ type Task struct {
 	Threshold   uint32
 	StartTime   time.Time
 
+	PrevEpochData helpers.PrevEpochParams
+
 	BinaryPath       string
 	ConfigPath       string
 	CertificatesPath string
@@ -53,6 +55,10 @@ func NewTask(tssconfig *config.TSSConfig, grpccon grpc.ClientConn, httpcon *http
 		CoreAddress:      tssconfig.CoreAddress,
 		GRPCCore:         grpccon,
 		HTTPCore:         httpcon,
+
+		PrevEpochData: helpers.PrevEpochParams{
+			BitcoinChainsData: make(map[string]helpers.BitcoinChainData),
+		},
 	}
 }
 
@@ -116,7 +122,6 @@ func (t Task) Parse(attributes []types.Attribute) (types.Task, error) {
 		}
 	}
 
-	fmt.Println(task)
 	return task, nil
 }
 
@@ -219,7 +224,6 @@ func (t Task) Execute(ctx context.Context) (bool, error) {
 		},
 		opt...,
 	)
-
 	if err != nil {
 		return false, errors.Wrap(err, fmt.Sprintf("failed to get epoch %d state", t.EpochId))
 	}

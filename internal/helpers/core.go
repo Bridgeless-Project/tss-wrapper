@@ -36,3 +36,12 @@ func GetChains(ctx context.Context, chainType bridgetypes.ChainType, connection 
 
 	return chains.Chains, nil
 }
+
+func GetParams(ctx context.Context, connection grpc.ClientConn) (*bridgetypes.Params, error) {
+	params, err := bridgetypes.NewQueryClient(connection).Params(ctx, &bridgetypes.QueryParamsRequest{})
+	if err != nil {
+		return nil, errors.Wrap(err, "could not get params")
+	}
+
+	return &params.Params, nil
+}

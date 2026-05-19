@@ -13,10 +13,11 @@ const eventsConfigKey = "events"
 type TaskType string
 
 const (
-	TaskTypeAutoResharing TaskType = "auto_resharing"
-	TaskTypeUpdate        TaskType = "update"
-	TaskTypeMigrateUp     TaskType = "migrate_up"
-	TaskTypeTimeChanger   TaskType = "timechanger"
+	TaskTypeAutoResharing          TaskType = "auto_resharing"
+	TaskTypeAutoResharingMigration TaskType = "auto_resharing_migration"
+	TaskTypeUpdate                 TaskType = "update"
+	TaskTypeMigrateUp              TaskType = "migrate_up"
+	TaskTypeTimeChanger            TaskType = "timechanger"
 )
 
 type EventsConfiger interface {
@@ -49,11 +50,11 @@ type eventsConfig struct {
 func (c *eventsConfig) EventsConfig() []EventConfig {
 	return c.once.Do(func() interface{} {
 		raw := kv.MustGetStringMap(c.getter, eventsConfigKey)
-		сfg := new(eventsConfigRaw)
-		err := figure.Out(сfg).With(figure.BaseHooks).From(raw).Please()
+		cfg := new(eventsConfigRaw)
+		err := figure.Out(cfg).With(figure.BaseHooks).From(raw).Please()
 		if err != nil {
 			panic(errors.Wrap(err, "failed to figure out events config"))
 		}
-		return сfg.List
+		return cfg.List
 	}).([]EventConfig)
 }

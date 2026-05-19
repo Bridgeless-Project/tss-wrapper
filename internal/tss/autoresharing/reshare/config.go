@@ -1,4 +1,4 @@
-package autoresharing
+package reshare
 
 import (
 	"fmt"
@@ -13,18 +13,18 @@ import (
 	"github.com/pkg/errors"
 )
 
-func (t Task) updateConfigBeforeResharing() error {
+func (t *Task) updateConfigBeforeResharing() error {
 	configer := helpers.NewConfigManager(t.ConfigPath)
 	if err := configer.Load(); err != nil {
 		return errors.Wrap(err, "failed to load config")
 	}
 
-	parties, err := configer.GetParties(helpers.PartiesKey)
+	oldParties, err := configer.GetParties(helpers.PartiesKey)
 	if err != nil {
 		return errors.Wrap(err, "failed to get parties")
 	}
 
-	newParties, err := t.determinePartiesConfig(parties)
+	newParties, err := t.determinePartiesConfig(oldParties)
 	if err != nil {
 		return errors.Wrap(err, "failed to determine parties config")
 	}
@@ -34,18 +34,39 @@ func (t Task) updateConfigBeforeResharing() error {
 		return errors.Wrap(err, "failed to update parties config")
 	}
 
+	if !t.isNewParty() {
+		t.PrevEpochData.Parties = oldParties
+		t.PrevEpochData.Threshold, err = configer.GetThreshold()
+		if err != nil {
+			return errors.Wrap(err, "failed to get old threshold")
+		}
+	}
+
 	return errors.Wrap(configer.Save(), "failed to save config")
 }
 
-func (t Task) updateConfigAfterResharing(epoch *bridgetypes.Epoch, startTime time.Time, utxoChains []bridgetypes.Chain) error {
+func (t *Task) updateConfigAfterResharing(epoch *bridgetypes.Epoch, startTime time.Time, utxoChains []bridgetypes.Chain) error {
 	configer := helpers.NewConfigManager(t.ConfigPath)
 	if err := configer.Load(); err != nil {
 		return errors.Wrap(err, "failed to load config")
 	}
 
 	for _, chain := range utxoChains {
-		if err := configer.UpdateBitcoinWallet(chain.BridgeAddress, epoch.Id, chain.Id); err != nil {
-			return errors.Wrap(err, "failed to update bitcoin wallet")
+		oldWalletName, err := configer.UpdateBitcoinWallet(
+			getWalletName(epoch.Id, chain.BridgeAddress),
+			chain.Id,
+			helpers.WalletBridgeAddressData{
+				Address:    chain.BridgeAddress,
+				ReplaceAll: false, // keep existing addresses to support old epochs
+			},
+		)
+		if err != nil {
+			return errors.Wrapf(err, "failed to update bitcoin wallet for epoch %d", epoch.Id)
+		}
+
+		t.PrevEpochData.BitcoinChainsData[chain.Id] = helpers.BitcoinChainData{
+			NewBridgeAddress: chain.BridgeAddress,
+			OldWalletName:    oldWalletName,
 		}
 	}
 
@@ -55,9 +76,14 @@ func (t Task) updateConfigAfterResharing(epoch *bridgetypes.Epoch, startTime tim
 	}
 
 	configer.SetParties(helpers.PartiesKey, newParties)
+
 	err = configer.SetStartInfo(startTime, epoch.TssThreshold)
 	if err != nil {
 		return errors.Wrap(err, "failed to set start time")
+	}
+
+	if !t.isNewParty() { // new party won't have prev epoch data
+		configer.SetPrevEpochParams(t.PrevEpochData)
 	}
 
 	return errors.Wrap(configer.Save(), "failed to save new parties")
@@ -128,4 +154,8 @@ func (t Task) storeCertificate(domain, certificate string) (string, error) {
 	}
 
 	return certPath, nil
+}
+
+func getWalletName(epoch uint32, addr string) string {
+	return fmt.Sprintf("%d_%s", epoch, addr)
 }

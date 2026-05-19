@@ -7,6 +7,8 @@ import (
 	"syscall"
 	"time"
 
+	resharingMigration "github.com/Bridgeless-Project/tss-wrapper-svc/internal/tss/autoresharing/migration"
+	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/tss/autoresharing/reshare"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/tss/timechanger"
 
 	"github.com/Bridgeless-Project/tss-wrapper-svc/cmd/utils"
@@ -17,7 +19,6 @@ import (
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/core/scheduler"
 	db "github.com/Bridgeless-Project/tss-wrapper-svc/internal/data"
 	pg "github.com/Bridgeless-Project/tss-wrapper-svc/internal/data/postgres"
-	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/tss/autoresharing"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/tss/migrate_up"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/tss/update"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/types"
@@ -164,7 +165,7 @@ func loadIncompleteTasks(
 				Error("failed to restore task from database, skipping")
 			continue
 		}
-		if task.GetTime().Unix() <= time.Now().Unix() && task.GetTaskType() == autoresharing.TaskType {
+		if task.GetTime().Unix() <= time.Now().Unix() && task.GetTaskType() == reshare.TaskType {
 			logger.Warnf("Skipping task for event %s as it's in the past", task.GetTaskType())
 			continue
 		}
@@ -192,7 +193,13 @@ func loadIncompleteTasks(
 func createTask(taskType config.TaskType, cfg config.Config) (types.Task, error) {
 	switch taskType {
 	case config.TaskTypeAutoResharing:
-		return autoresharing.NewTask(
+		return reshare.NewTask(
+			cfg.TSSConfig(),
+			cfg.TendermintGrpcClient(),
+			cfg.TendermintHttpClient(),
+		), nil
+	case config.TaskTypeAutoResharingMigration:
+		return resharingMigration.NewTask(
 			cfg.TSSConfig(),
 			cfg.TendermintGrpcClient(),
 			cfg.TendermintHttpClient(),
@@ -213,14 +220,24 @@ func createTaskFromRecord(record db.TaskRecord, cfg config.Config) (types.Task, 
 	var task types.Task
 
 	switch record.TaskType {
-	case autoresharing.TaskType:
-		t := autoresharing.NewTask(
+	case reshare.TaskType:
+		t := reshare.NewTask(
 			cfg.TSSConfig(),
 			cfg.TendermintGrpcClient(),
 			cfg.TendermintHttpClient(),
 		)
 		if err := t.UnmarshalData(record.Data); err != nil {
 			return nil, errors.Wrap(err, "failed to unmarshal autoresharing task data")
+		}
+		task = t
+	case resharingMigration.TaskType:
+		t := resharingMigration.NewTask(
+			cfg.TSSConfig(),
+			cfg.TendermintGrpcClient(),
+			cfg.TendermintHttpClient(),
+		)
+		if err := t.UnmarshalData(record.Data); err != nil {
+			return nil, errors.Wrap(err, "failed to unmarshal autoresharing migration task data")
 		}
 		task = t
 	case update.TaskType:
