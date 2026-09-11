@@ -14,7 +14,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/config"
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/types"
 	"github.com/pkg/errors"
 )
@@ -24,11 +23,9 @@ const TaskType = "update"
 const (
 	AttributeUpdateLink      = "update_link"
 	AttributeUpdateStartTime = "update_start_time"
-)
 
-const checksumParam = "checksum"
+	checksumParam = "checksum"
 
-const (
 	newBinarySuffix = ".new"
 	backupSuffix    = ".bak"
 	binaryMode      = 0o755
@@ -52,8 +49,8 @@ type Task struct {
 	backupPath string
 }
 
-func NewTask(tssconfig *config.TSSConfig) *Task {
-	return &Task{BinaryPath: tssconfig.BinaryPath}
+func NewTask(binaryPath string) *Task {
+	return &Task{BinaryPath: binaryPath}
 }
 
 func (t *Task) Execute(ctx context.Context) (bool, error) {
