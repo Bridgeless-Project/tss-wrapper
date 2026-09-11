@@ -1,0 +1,74 @@
+syntax = "proto3";
+
+import "google/api/annotations.proto";
+import "gogoproto/gogo.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+import "types/party.proto";
+import "types/const.proto";
+
+
+option go_package = "github.com/Bridgeless-Project/tss-wrapper-svc/resources";
+
+option (grpc.gateway.protoc_gen_openapiv2.options.openapiv2_swagger) = {
+  info: {
+    title: "TSS-wrapper-svc API"
+    version: "0.1.0"
+  }
+};
+
+service API{
+  rpc CheckUpdate(CheckUpdateRequest) returns (CheckUpdateResponse) {
+    option (google.api.http) = {
+      get: "/check/{epoch}"
+    };
+  }
+  rpc UpdateTime(UpdateTimeRequest) returns (UpdateTimeResponse) {
+    option (google.api.http) = {
+      post: "/config/time",
+      body: "*"
+    };
+  }
+  rpc GetTasks(GetTasksRequest) returns (GetTasksResponse) {
+    option (google.api.http) = {
+      get: "/tasks"
+    };
+  }
+}
+
+message UpdateTimeRequest {
+  int64 start_time = 1;
+  int64 target_time = 2;
+}
+
+message UpdateTimeResponse {
+}
+
+message GetTasksRequest {
+  optional ProcessStatus status = 1;
+  optional uint64 offset = 2;
+  optional uint64 limit = 3;
+}
+
+message GetTasksResponse {
+  repeated TaskRecord records = 1;
+}
+
+message UpdateDataRequest {
+  repeated Certiticate certificates = 1;
+}
+
+message UpdateDataResponse {
+  ProcessStatus status = 1;
+}
+
+message CheckUpdateRequest {
+   string update_number = 1;
+   uint64 epoch = 2;
+}
+
+message CheckUpdateResponse {
+  uint64 update_time = 1;
+  string update_number = 2;
+
+  // TODO: maybe add more fields
+}

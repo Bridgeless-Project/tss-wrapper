@@ -1,0 +1,43 @@
+name: Build tss-wrapper-svc docker image
+on:
+  push:
+    branches:
+      - "main"
+      - "dev"
+      - "**"
+
+env:
+  CI_ACCESS_TOKEN: ${{ secrets.CI_ACCESS_TOKEN }}
+  GITHUB_REPOSITORY: ghcr.io/bridgeless-project/tss-wrapper
+
+jobs:
+  converge-github:
+    name: Build To Github
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Log in to registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u $ --password-stdin
+
+      - name: Build and Push Image
+        env:
+          IMAGE: ${{ env.GITHUB_REPOSITORY }}:${{ github.sha }}
+          CACHE_REPO: ${{ env.GITHUB_REPOSITORY }}/cache
+        run: |
+          buildah build \
+            -f build/Dockerfile \
+            --layers \
+            --cache-from $CACHE_REPO \
+            --cache-to $CACHE_REPO \
+            -t $IMAGE \
+            --build-arg CI_ACCESS_TOKEN=$CI_ACCESS_TOKEN \
+            .
+
+      - name: Push Image
+        env:
+          IMAGE: ${{ env.GITHUB_REPOSITORY }}:${{ github.sha }}
+        run: buildah push $IMAGE

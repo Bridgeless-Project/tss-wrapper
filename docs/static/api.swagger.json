@@ -1,0 +1,245 @@
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "TSS-wrapper-svc API",
+    "version": "0.1.0"
+  },
+  "tags": [
+    {
+      "name": "API"
+    }
+  ],
+  "consumes": [
+    "application/json"
+  ],
+  "produces": [
+    "application/json"
+  ],
+  "paths": {
+    "/check/{epoch}": {
+      "get": {
+        "operationId": "API_CheckUpdate",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/CheckUpdateResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "epoch",
+            "in": "path",
+            "required": true,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "updateNumber",
+            "in": "query",
+            "required": false,
+            "type": "string"
+          }
+        ],
+        "tags": [
+          "API"
+        ]
+      }
+    },
+    "/config/time": {
+      "post": {
+        "operationId": "API_UpdateTime",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/UpdateTimeResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "body",
+            "in": "body",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/UpdateTimeRequest"
+            }
+          }
+        ],
+        "tags": [
+          "API"
+        ]
+      }
+    },
+    "/tasks": {
+      "get": {
+        "operationId": "API_GetTasks",
+        "responses": {
+          "200": {
+            "description": "A successful response.",
+            "schema": {
+              "$ref": "#/definitions/GetTasksResponse"
+            }
+          },
+          "default": {
+            "description": "An unexpected error response.",
+            "schema": {
+              "$ref": "#/definitions/rpcStatus"
+            }
+          }
+        },
+        "parameters": [
+          {
+            "name": "status",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "enum": [
+              "PROCESS_STATUS_CREATED",
+              "PROCESS_STATUS_PLANNED",
+              "PROCESS_STATUS_ONGOING",
+              "PROCESS_STATUS_COMPLETED",
+              "PROCESS_STATUS_FAILED",
+              "PROCESS_STATUS_RETRY"
+            ],
+            "default": "PROCESS_STATUS_CREATED"
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "type": "string",
+            "format": "uint64"
+          }
+        ],
+        "tags": [
+          "API"
+        ]
+      }
+    }
+  },
+  "definitions": {
+    "CheckUpdateResponse": {
+      "type": "object",
+      "properties": {
+        "updateTime": {
+          "type": "string",
+          "format": "uint64"
+        },
+        "updateNumber": {
+          "type": "string"
+        }
+      }
+    },
+    "GetTasksResponse": {
+      "type": "object",
+      "properties": {
+        "records": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/TaskRecord"
+          }
+        }
+      }
+    },
+    "ProcessStatus": {
+      "type": "string",
+      "enum": [
+        "PROCESS_STATUS_CREATED",
+        "PROCESS_STATUS_PLANNED",
+        "PROCESS_STATUS_ONGOING",
+        "PROCESS_STATUS_COMPLETED",
+        "PROCESS_STATUS_FAILED",
+        "PROCESS_STATUS_RETRY"
+      ],
+      "default": "PROCESS_STATUS_CREATED"
+    },
+    "TaskRecord": {
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string",
+          "format": "int64"
+        },
+        "tasktype": {
+          "type": "string"
+        },
+        "status": {
+          "$ref": "#/definitions/ProcessStatus"
+        },
+        "data": {
+          "type": "string"
+        },
+        "error": {
+          "type": "string"
+        }
+      }
+    },
+    "UpdateTimeRequest": {
+      "type": "object",
+      "properties": {
+        "startTime": {
+          "type": "string",
+          "format": "int64"
+        },
+        "targetTime": {
+          "type": "string",
+          "format": "int64"
+        }
+      }
+    },
+    "UpdateTimeResponse": {
+      "type": "object"
+    },
+    "protobufAny": {
+      "type": "object",
+      "properties": {
+        "@type": {
+          "type": "string"
+        }
+      },
+      "additionalProperties": {}
+    },
+    "rpcStatus": {
+      "type": "object",
+      "properties": {
+        "code": {
+          "type": "integer",
+          "format": "int32"
+        },
+        "message": {
+          "type": "string"
+        },
+        "details": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "$ref": "#/definitions/protobufAny"
+          }
+        }
+      }
+    }
+  }
+}

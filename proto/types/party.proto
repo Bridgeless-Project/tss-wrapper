@@ -1,0 +1,20 @@
+syntax = "proto3";
+
+import "google/api/annotations.proto";
+import "gogoproto/gogo.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+import "types/const.proto";
+
+option go_package = "github.com/Bridgeless-Project/tss-wrapper-svc/resources/types";
+
+message Certiticate {
+  bytes data = 1;
+}
+
+message TaskRecord {
+    int64 id = 1;
+    string tasktype = 2;
+    ProcessStatus status = 3;
+    string data = 4;
+    string error = 5;
+}

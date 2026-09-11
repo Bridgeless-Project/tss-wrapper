@@ -1,0 +1,16 @@
+syntax = "proto3";
+
+import "google/api/annotations.proto";
+import "gogoproto/gogo.proto";
+import "protoc-gen-openapiv2/options/annotations.proto";
+
+option go_package = "github.com/Bridgeless-Project/tss-wrapper-svc/resources/types";
+
+enum ProcessStatus {
+  PROCESS_STATUS_CREATED = 0;
+  PROCESS_STATUS_PLANNED = 1;
+  PROCESS_STATUS_ONGOING = 2;
+  PROCESS_STATUS_COMPLETED = 3;
+  PROCESS_STATUS_FAILED = 4;
+  PROCESS_STATUS_RETRY = 5;
+}
