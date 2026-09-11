@@ -205,7 +205,7 @@ func createTask(taskType config.TaskType, cfg config.Config) (types.Task, error)
 			cfg.TendermintHttpClient(),
 		), nil
 	case config.TaskTypeUpdate:
-		return update.NewTask(), nil
+		return update.NewTask(cfg.TSSConfig()), nil
 	case config.TaskTypeMigrateUp:
 		return migrate_up.NewTask(cfg.TSSConfig()), nil
 	case config.TaskTypeTimeChanger:
@@ -241,7 +241,7 @@ func createTaskFromRecord(record db.TaskRecord, cfg config.Config) (types.Task, 
 		}
 		task = t
 	case update.TaskType:
-		t := update.NewTask()
+		t := update.NewTask(cfg.TSSConfig())
 		if err := t.UnmarshalData(record.Data); err != nil {
 			return nil, errors.Wrap(err, "failed to unmarshal update task data")
 		}
