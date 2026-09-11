@@ -2,16 +2,13 @@ package update
 
 import (
 	"context"
-	"crypto/sha256"
-	"encoding/hex"
 	"encoding/json"
 	"io"
 	"net/http"
-	"net/url"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strconv"
-	"strings"
 	"time"
 
 	"github.com/Bridgeless-Project/tss-wrapper-svc/internal/types"
@@ -24,14 +21,12 @@ const (
 	AttributeUpdateLink      = "update_link"
 	AttributeUpdateStartTime = "update_start_time"
 
-	checksumParam = "checksum"
+	updateDirName = "updates"
+	backupSuffix  = "backup"
+	binaryMode    = 0o755
 
-	newBinarySuffix = ".new"
-	backupSuffix    = ".bak"
-	binaryMode      = 0o755
-
-	downloadTimeout = 10 * time.Minute
-	verifyTimeout   = 30 * time.Second
+	defaultDownloadTimeout = 10 * time.Minute
+	defaultVerifyTimeout   = 30 * time.Second
 )
 
 type taskData struct {
@@ -54,25 +49,19 @@ func NewTask(binaryPath string) *Task {
 }
 
 func (t *Task) Execute(ctx context.Context) (bool, error) {
-	if t.BinaryPath == "" {
-		return true, errors.New("binary path is not set")
-	}
-	if t.Link == "" {
-		return true, errors.New("update link is not set")
+	if err := t.validate(); err != nil {
+		return true, errors.Wrap(err, "invalid update task")
 	}
 
-	link, checksum, err := splitChecksum(t.Link)
-	if err != nil {
-		return true, errors.Wrap(err, "invalid update link")
-	}
-	if checksum == "" {
-		return true, errors.New("update link has no checksum")
+	updateDir := filepath.Join(filepath.Dir(t.BinaryPath), updateDirName)
+	if err := os.MkdirAll(updateDir, os.ModePerm); err != nil {
+		return true, errors.Wrap(err, "failed to create update directory")
 	}
 
-	newPath := t.BinaryPath + newBinarySuffix
+	newPath := filepath.Join(updateDir, filepath.Base(t.BinaryPath))
 	defer os.Remove(newPath)
 
-	if err = t.downloadBinary(ctx, link, checksum, newPath); err != nil {
+	if err := t.downloadBinary(ctx, t.Link, newPath); err != nil {
 		return true, errors.Wrap(err, "failed to download TSS binary")
 	}
 
@@ -81,6 +70,16 @@ func (t *Task) Execute(ctx context.Context) (bool, error) {
 	}
 
 	return true, errors.Wrap(t.replaceBinary(newPath), "failed to replace TSS binary")
+}
+
+func (t *Task) validate() error {
+	if t.BinaryPath == "" {
+		return errors.New("binary path is not set")
+	}
+	if t.Link == "" {
+		return errors.New("update link is not set")
+	}
+	return nil
 }
 
 func (t *Task) GetTime() time.Time {
@@ -103,10 +102,6 @@ func (t *Task) Parse(attributes []types.Attribute) (types.Task, error) {
 		default:
 			continue
 		}
-	}
-
-	if task.Link == "" {
-		return nil, errors.New("update event has no binary link")
 	}
 
 	return task, nil
@@ -166,8 +161,8 @@ func (t *Task) UnmarshalData(data string) error {
 	return nil
 }
 
-func (t *Task) downloadBinary(ctx context.Context, url string, checksum string, filepath string) error {
-	ctx, cancel := context.WithTimeout(ctx, downloadTimeout)
+func (t *Task) downloadBinary(ctx context.Context, url string, path string) error {
+	ctx, cancel := context.WithTimeout(ctx, defaultDownloadTimeout)
 	defer cancel()
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
@@ -185,19 +180,14 @@ func (t *Task) downloadBinary(ctx context.Context, url string, checksum string, 
 		return errors.Errorf("bad status: %s", resp.Status)
 	}
 
-	out, err := os.Create(filepath)
+	out, err := os.Create(path)
 	if err != nil {
 		return errors.Wrap(err, "failed to create local file")
 	}
 	defer out.Close()
 
-	digest := sha256.New()
-	if _, err = io.Copy(out, io.TeeReader(resp.Body, digest)); err != nil {
-		return errors.Wrap(err, "failed to write and hash downloaded file")
-	}
-
-	if err = compareChecksum(checksum, digest.Sum(nil)); err != nil {
-		return errors.Wrap(err, "checksum validation failed")
+	if _, err = io.Copy(out, resp.Body); err != nil {
+		return errors.Wrap(err, "failed to write downloaded file")
 	}
 
 	if err = out.Chmod(binaryMode); err != nil {
@@ -207,73 +197,39 @@ func (t *Task) downloadBinary(ctx context.Context, url string, checksum string, 
 	return out.Sync()
 }
 
-func verifyBinary(ctx context.Context, filepath string) error {
-	ctx, cancel := context.WithTimeout(ctx, verifyTimeout)
+func verifyBinary(ctx context.Context, path string) error {
+	ctx, cancel := context.WithTimeout(ctx, defaultVerifyTimeout)
 	defer cancel()
 
-	if err := exec.CommandContext(ctx, filepath, "--help").Run(); err != nil {
+	if err := exec.CommandContext(ctx, path, "--help").Run(); err != nil {
 		return errors.Wrap(err, "binary failed to execute --help")
 	}
 	return nil
 }
 
 func (t *Task) replaceBinary(newPath string) error {
-	backupPath := t.BinaryPath + backupSuffix
+	backupPath := filepath.Join(filepath.Dir(newPath), filepath.Base(t.BinaryPath)+backupSuffix)
 
-	backed := true
+	isBacked := true
 	if err := os.Rename(t.BinaryPath, backupPath); err != nil {
 		if !os.IsNotExist(err) {
 			return errors.Wrap(err, "failed to back up current binary")
 		}
-		backed = false
+		isBacked = false
 	}
 
 	if err := os.Rename(newPath, t.BinaryPath); err != nil {
-		if backed {
-			if restoreErr := os.Rename(backupPath, t.BinaryPath); restoreErr != nil {
-				return errors.Wrap(restoreErr, "failed to restore current binary")
-			}
+		if !isBacked {
+			return errors.Wrap(err, "failed to move new binary into place")
+		}
+		if restoreErr := os.Rename(backupPath, t.BinaryPath); restoreErr != nil {
+			return errors.Wrap(restoreErr, "failed to restore current binary")
 		}
 		return errors.Wrap(err, "failed to move new binary into place")
 	}
 
-	if backed {
+	if isBacked {
 		t.backupPath = backupPath
-	}
-
-	return nil
-}
-
-func splitChecksum(link string) (string, string, error) {
-	parsed, err := url.Parse(link)
-	if err != nil {
-		return "", "", errors.Wrap(err, "failed to parse URL")
-	}
-
-	query := parsed.Query()
-	checksum := query.Get(checksumParam)
-	if checksum == "" {
-		return link, "", nil
-	}
-
-	query.Del(checksumParam)
-	parsed.RawQuery = query.Encode()
-
-	return parsed.String(), checksum, nil
-}
-
-func compareChecksum(expected string, sum []byte) error {
-	algorithm, want, ok := strings.Cut(expected, ":")
-	if !ok {
-		return errors.Errorf("malformed checksum %q, want <algorithm>:<hex>", expected)
-	}
-	if algorithm != "sha256" {
-		return errors.Errorf("unsupported checksum algorithm %q", algorithm)
-	}
-
-	got := hex.EncodeToString(sum)
-	if !strings.EqualFold(got, want) {
-		return errors.Errorf("checksum mismatch: got %s, want %s", got, want)
 	}
 
 	return nil
