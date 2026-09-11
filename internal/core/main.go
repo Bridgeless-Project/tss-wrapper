@@ -176,6 +176,22 @@ func (o *Orchestrator) Run(ctx context.Context) error {
 				}
 			}
 
+			if startDefaultMode {
+				if err = o.launchPrestartTasks(ctx); err != nil {
+					o.updateTaskFailed(taskID, err)
+					o.logger.WithError(err).
+						WithField("task_id", taskID).
+						Error("failed to execute prestart tasks after task")
+
+					o.revertTask(ctx, task, taskID)
+
+					if err = o.StartDefaultMode(ctx); err != nil {
+						return errors.Wrap(err, "failed to restart default mode after prestart tasks failure")
+					}
+					continue
+				}
+			}
+
 			// Update task status to Completed
 			if err = o.tasksDb.UpdateStatus(taskID, grpcTypes.ProcessStatus_PROCESS_STATUS_COMPLETED); err != nil {
 				o.logger.WithError(err).
@@ -193,6 +209,28 @@ func (o *Orchestrator) Run(ctx context.Context) error {
 				return errors.Wrap(err, "failed to restart default mode after task")
 			}
 		}
+	}
+}
+
+func (o *Orchestrator) revertTask(ctx context.Context, task types.Task, taskID int64) {
+	reverter, ok := task.(types.Reverter)
+	if !ok {
+		return
+	}
+
+	if err := reverter.Revert(); err != nil {
+		o.logger.WithError(err).
+			WithField("task_id", taskID).
+			Error("failed to revert task after prestart tasks failure")
+		return
+	}
+
+	o.logger.WithField("task_id", taskID).Info("reverted task after prestart tasks failure")
+
+	if err := o.launchPrestartTasks(ctx); err != nil {
+		o.logger.WithError(err).
+			WithField("task_id", taskID).
+			Error("failed to execute prestart tasks after revert")
 	}
 }
 

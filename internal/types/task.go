@@ -20,3 +20,7 @@ type Task interface {
 	MarshalData() (string, error)
 	UnmarshalData(data string) error
 }
+
+type Reverter interface {
+	Revert() error
+}

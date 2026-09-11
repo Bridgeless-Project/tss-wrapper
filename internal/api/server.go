@@ -113,8 +113,8 @@ func (s *Server) httpRouter(ctxt context.Context) (http.Handler, error) {
 	}
 
 	router.Mount("/", grpcGatewayRouter)
-	router.Mount("/static/types.swagger.json", http.FileServer(http.FS(docs.Docs)))
-	router.HandleFunc("/api", openapiconsole.Handler("Relayer service API", "/static/types.swagger.json"))
+	router.Handle("/static/api.swagger.json", http.FileServer(http.FS(docs.Docs)))
+	router.HandleFunc("/api", openapiconsole.Handler("TSS wrapper service API", "/static/api.swagger.json"))
 
 	return router, nil
 }
